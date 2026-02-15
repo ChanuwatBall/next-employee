@@ -37,12 +37,17 @@ html, body, #root {
 .border-primary {
   border-color: var(--ion-color-primary);
 }
-
+.bg-tertiary-tint{
+  background-color: var(--ion-color-tertiary-tint);
+}
 .text-bold {
   font-weight: bold;
 }
 .text-sm {
   font-size: 0.875rem;
+}
+.text-2xs {
+  font-size: 0.625rem;
 }
 .text-xs {
   font-size: 0.75rem;

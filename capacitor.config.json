@@ -1,0 +1,7 @@
+{
+  "appId": "at.next.employee",
+  "appName": "NextEmployee",
+  "bundledWebRuntime": false,
+  "webDir": "dist",
+  "plugins": {}
+}

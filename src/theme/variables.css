@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 /* For information on how to create your own theme, please refer to:
 http://ionicframework.com/docs/theming/ */
 
@@ -11,17 +13,20 @@ http://ionicframework.com/docs/theming/ */
 }
 
 :root{
+    --ion-font-family: 'Inter','Kanit', system-ui, -apple-system, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
 	--ion-color-primary: #E3203B;
 	--ion-color-primary-rgb: 227, 32, 58;
 	--ion-color-primary-tint: #e94f5c;
     --ion-color-primary-shade: #c11b32;
 
 	--ion-color-warning: #F9E000;
-	--ion-color-warning-rgba: 249, 224, 0;
-    --ion-color-warning-tint: #f9e533;
+	--ion-color-warning-rgba: 249, 224, 0; 
     --ion-color-warning-shade: #c1a800;
 
-	--ion-color-tertiary: #06d6a0;
+	--ion-color-tertiary-tint: #EFF6FF;
+	--ion-color-tertiary-shade: #BFDBFE;
+	--ion-color-tertiary: #BAC4F5;
+	--ion-color-tertiary-rgb: 186, 196, 245;
 
 	--ion-color-white: #ffffff;
 
@@ -44,4 +49,5 @@ http://ionicframework.com/docs/theming/ */
 body{
 	background: var(--ion-background-color);
 	color: var(--ion-text-color);
+    font-family: var(--ion-font-family);
 }

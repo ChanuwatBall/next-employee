@@ -96,7 +96,7 @@ const Home: React.FC = () => {
   return (
     <IonPage>
       <IonHeader className="ion-no-border ion-padding-bottom" >
-        <IonToolbar className='ion-no-padding' >  
+        <IonToolbar className='ion-no-padding' color={"primary"}>  
           <div className="flex justify-between items-center mb-4 ion-padding-horizontal ion-padding-top bg-primary text-white  ion-padding-bottom  "
            style={{borderBottomLeftRadius:"2rem" , borderBottomRightRadius:"2rem"}}>
             <div className='ion-padding-bottom'>
