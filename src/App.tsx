@@ -10,10 +10,15 @@ import {
   setupIonicReact
 } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
-import { ellipse, square, triangle } from 'ionicons/icons';
-import Tab1 from './pages/Tab1';
+import { ellipse, home, square, triangle } from 'ionicons/icons';
+import Home from './pages/Home';
 import Tab2 from './pages/Tab2';
 import Tab3 from './pages/Tab3';
+import Trips from './pages/Trips';
+import TripDetail from './pages/TripDetail';
+import TicketDetail from './pages/TicketDetail';
+import Sigin from './pages/Sigin';
+import React from 'react';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -33,6 +38,7 @@ import '@ionic/react/css/display.css';
 
 /**
  * Ionic Dark Mode
+import PlanChair from './pages/PlanChair';
  * -----------------------------------------------------
  * For more info, please see:
  * https://ionicframework.com/docs/theming/dark-mode
@@ -44,44 +50,71 @@ import '@ionic/react/css/palettes/dark.system.css';
 
 /* Theme variables */
 import './theme/variables.css';
+import PlanChair from './pages/PlanChair';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faQrcode } from '@fortawesome/free-solid-svg-icons';
+import { faHouse, faUser } from '@fortawesome/free-regular-svg-icons';
 
 setupIonicReact();
 
-const App: React.FC = () => (
-  <IonApp>
-    <IonReactRouter>
-      <IonTabs>
-        <IonRouterOutlet>
-          <Route exact path="/tab1">
-            <Tab1 />
-          </Route>
-          <Route exact path="/tab2">
-            <Tab2 />
-          </Route>
-          <Route path="/tab3">
-            <Tab3 />
-          </Route>
-          <Route exact path="/">
-            <Redirect to="/tab1" />
-          </Route>
-        </IonRouterOutlet>
-        <IonTabBar slot="bottom">
-          <IonTabButton tab="tab1" href="/tab1">
-            <IonIcon aria-hidden="true" icon={triangle} />
-            <IonLabel>Tab 1</IonLabel>
-          </IonTabButton>
-          <IonTabButton tab="tab2" href="/tab2">
-            <IonIcon aria-hidden="true" icon={ellipse} />
-            <IonLabel>Tab 2</IonLabel>
-          </IonTabButton>
-          <IonTabButton tab="tab3" href="/tab3">
-            <IonIcon aria-hidden="true" icon={square} />
-            <IonLabel>Tab 3</IonLabel>
-          </IonTabButton>
-        </IonTabBar>
-      </IonTabs>
-    </IonReactRouter>
-  </IonApp>
-);
+const App: React.FC = () => {
+  const isAuthenticated = typeof window !== 'undefined' && localStorage.getItem('isAuthenticated') === 'true';
+  return (
+    <IonApp>
+      <IonReactRouter>
+        <IonTabs>
+          <IonRouterOutlet>
+            <Route path="/plan/:id" exact>
+              <PlanChair />
+            </Route>
+            <Route exact path="/signin">
+              <Sigin />
+            </Route>
+            <Route exact path="/home">
+              {isAuthenticated ? <Home /> : <Redirect to="/signin" />}
+            </Route>
+            <Route exact path="/tab2">
+              {isAuthenticated ? <Tab2 /> : <Redirect to="/signin" />}
+            </Route>
+            <Route path="/tab3">
+              {isAuthenticated ? <Tab3 /> : <Redirect to="/signin" />}
+            </Route>
+            <Route exact path="/trips">
+              {isAuthenticated ? <Trips /> : <Redirect to="/signin" />}
+            </Route>
+            <Route path="/trip/:id">
+              {isAuthenticated ? <TripDetail /> : <Redirect to="/signin" />}
+            </Route>
+            <Route path="/ticket/:id">
+              {isAuthenticated ? <TicketDetail /> : <Redirect to="/signin" />}
+            </Route>
+            <Route exact path="/">
+              <Redirect to={isAuthenticated ? '/home' : '/signin'} />
+            </Route>
+          </IonRouterOutlet>
+          {isAuthenticated && (
+            <IonTabBar slot="bottom" className='main-tab'>
+              <IonTabButton tab="tab1" href="/home">
+              <FontAwesomeIcon icon={faHouse} />
+                {/* <IonIcon aria-hidden="true" icon={home} /> */}
+                <IonLabel>Home</IonLabel>
+              </IonTabButton>
+              <IonTabButton tab="tab2" href="/tab2">
+              <FontAwesomeIcon icon={faQrcode} />
+                {/* <IonIcon aria-hidden="true" icon={ellipse} /> */}
+                <IonLabel>Scan</IonLabel>
+              </IonTabButton>
+              <IonTabButton tab="tab3" href="/tab3">
+              <FontAwesomeIcon icon={faUser} />
+                {/* <IonIcon aria-hidden="true" icon={square} /> */}
+                <IonLabel>Profile</IonLabel>
+              </IonTabButton>
+            </IonTabBar>
+          )}
+        </IonTabs>
+      </IonReactRouter>
+    </IonApp>
+  );
+};
 
 export default App;

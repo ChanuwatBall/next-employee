@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* small helpers for Ionic + Tailwind */
+html, body, #root {
+  height: 100%;
+}
+
+.bg-primary {
+  background-color: var(--ion-color-primary);
+}
+.bg-warning {
+  background-color: var(--ion-color-warning);
+}
+.bg-success {
+  background-color: var(--ion-color-success);
+}
+.bg-light {
+  background-color: var(--ion-color-light);
+}
+.bg-white {
+  background-color: var(--ion-color-white);
+}
+.bg-dark {
+  background-color: var(--ion-color-dark);
+}
+.text-meduim{
+  color: var(--ion-color-meduim);
+}
+.text-dark {
+  color: var(--ion-color-dark);
+}
+.text-light {
+  color: var(--ion-color-light);
+}
+.border-primary {
+  border-color: var(--ion-color-primary);
+}
+
+.text-bold {
+  font-weight: bold;
+}
+.text-sm {
+  font-size: 0.875rem;
+}
+.text-xs {
+  font-size: 0.75rem;
+}
+.text-md {
+  font-size: 1rem;
+}
+.text-lg {
+  font-size: 1.125rem;
+}
+.text-xl {
+  font-size: 1.25rem;
+}
+.text-2xl {
+  font-size: 1.5rem;
+}
+.text-3xl {
+  font-size: 1.875rem;
+}
+.text-4xl {
+  font-size: 2.25rem;
+}
