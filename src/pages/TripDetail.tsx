@@ -4,6 +4,7 @@ import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonButton, IonGri
 import moment, { duration } from 'moment';
 import React from 'react';
 import { useHistory, useParams } from 'react-router-dom';
+import './css/TripDetail.css';
 
 const TripDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -87,7 +88,7 @@ const TripDetail: React.FC = () => {
           </div>
         </IonToolbar>
       </IonHeader>
-      <IonContent color={"light"} className="ion-no-padding min-h-screen" style={{ position: "relative", }} >
+      <IonContent color={"light"} className="ion-no-padding min-h-screen" style={{ position: "relative" }} >
         <div className="grid grid-rows-2   ion-padding-horizontal ion-padding-top bg-primary text-white  ion-padding-bottom  "
           style={{ borderBottomLeftRadius: "4rem", borderBottomRightRadius: "4rem", paddingBottom: "4rem" }} >
 
@@ -166,7 +167,13 @@ const TripDetail: React.FC = () => {
               ))} 
             </div>
         </div>
-        
+        <div className='bottom-div' >
+          <IonButton expand='block' mode='ios'   className=" text-light rounded-4xl" 
+           onClick={()=>{history.push("/plan/"+trip?.id)}} >
+            ที่นั่งทั้งหมด
+          </IonButton>
+        </div> 
+        <div style={{height:"15rem"}} ></div>
       </IonContent>
     </IonPage>
   );

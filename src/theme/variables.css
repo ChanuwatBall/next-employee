@@ -31,8 +31,12 @@ http://ionicframework.com/docs/theming/ */
 	--ion-color-white: #ffffff;
 
 	--ion-color-light: #f8f9fa;
+	--ion-color-light-tint: #ededed;
+	--ion-color-light-shade: #cfcece;
 
 	--ion-color-meduim: #6c757d;
+	--ion-color-meduim-tint: #a6a7a8;
+	--ion-color-meduim-shade: #6c757d;
 
 	--ion-color-dark: #121417;
 
