@@ -12,6 +12,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@capacitor-mlkit/barcode-scanning": "^6.2.0",
     "@capacitor/android": "6.1.2",
     "@capacitor/app": "6.0.1",
     "@capacitor/core": "6.2.0",
@@ -28,6 +29,7 @@
     "@types/react-router": "^5.1.20",
     "@types/react-router-dom": "^5.3.3",
     "axios": "^1.13.5",
+    "barcode-detector": "^3.0.8",
     "html5-qrcode": "^2.3.8",
     "ionicons": "^7.4.0",
     "moment": "^2.30.1",

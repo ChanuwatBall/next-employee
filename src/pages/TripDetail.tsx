@@ -96,8 +96,8 @@ const TripDetail: React.FC = () => {
             <div>
               <IonLabel style={{ fontWeight: "bolder", fontSize: "1.7em" }} >{trip.departure}</IonLabel>
             </div>
-            <div className='ion-text-center flex items-center justify-center' >
-              <FontAwesomeIcon icon={faArrowRight} style={{ fontWeight: "bolder", fontSize: "1.2em" }} />
+            <div className='ion-text-center flex items-center justify-center ' >
+              <FontAwesomeIcon icon={faArrowRight} className='text-white' style={{ fontWeight: "bolder", fontSize: "1.2em" }} />
             </div>
             <div className='ion-text-right'>
               <IonLabel style={{ fontWeight: "bolder", fontSize: "1.7em" }}>{trip.destination}</IonLabel>
@@ -118,8 +118,8 @@ const TripDetail: React.FC = () => {
             style={{ borderRadius: "1rem",   zIndex: 99 , width:"90%", boxShadow: "rgba(100, 100, 111, 0.2) 0px 7px 29px 0px" }} >
             <div className='ion-text-center'> 
               <p style={{lineHeight:"1.5em"}} >
-                <small className='text-dark'>ต้นทางรถอก</small>  <br/>
-                <IonLabel className='text-2xl ' ><strong>{trip.time}</strong></IonLabel> <br/>
+                <small className='text-meduim'>ต้นทางรถอก</small>  <br/>
+                <IonLabel className='text-2xl ' color={"dark"} ><strong>{trip.time}</strong></IonLabel> <br/>
                 <IonLabel className='text-sm text-meduim' >{trip.departure}</IonLabel>
               </p>
             </div>
@@ -130,8 +130,8 @@ const TripDetail: React.FC = () => {
             </div>
             <div className='ion-text-center'>
               <p style={{lineHeight:"1.5em"}} >
-                <small className='text-dark text-xs'>ปลายทาง</small>  <br/>
-                <IonLabel className='text-2xl ' ><strong>{trip.arrive}</strong></IonLabel> <br/>
+                <small className='text-meduim text-xs'>ปลายทาง</small>  <br/>
+                <IonLabel className='text-2xl '  color={"dark"}><strong>{trip.arrive}</strong></IonLabel> <br/>
                 <IonLabel className='text-sm text-meduim' >{trip.destination}</IonLabel>
               </p>
             </div>
@@ -146,10 +146,10 @@ const TripDetail: React.FC = () => {
               </IonText>
             </div>
             <div>
-              <IonText className='text-medium text-xs'>{trip.bus}</IonText> <br/>
+              <IonText className='text-xs' color={"medium"} > {trip.bus}</IonText> <br/>
             </div>
             <div>
-              <IonText className='text-medium text-xs'>สิ่งอำนวยความสะดวก : {trip.facilities}</IonText> <br/>
+              <IonText className='text-xs' color={"medium"} >สิ่งอำนวยความสะดวก : {trip.facilities}</IonText> <br/>
             </div>
           </div>
 
@@ -194,7 +194,7 @@ const StationTrip: React.FC<{ station: any }> = ({ station }) => {
         </div>
       </div>
       <div className='col-span-8 ion-padding-start'>
-         <IonLabel className='text-sm text-dark' >{station.name}</IonLabel> <br/>
+         <IonLabel className='text-sm  ' color={"dark"} >{station.name}</IonLabel> <br/>
          <IonLabel className='text-xs text-meduim' >เวลา {station.time}</IonLabel>
       </div>
       <div className='col-span-3 ion-text-right'>

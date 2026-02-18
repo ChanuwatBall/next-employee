@@ -1,85 +1,116 @@
-import { IonButton, IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/react';
-import React, { useEffect, useRef, useState } from 'react';
-import './css/Tab2.css';
-import { Html5Qrcode } from 'html5-qrcode';
+import React, { useEffect, useRef, useState } from "react";
+import {
+  IonPage,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonButtons,
+  IonBackButton,
+  IonContent,
+} from "@ionic/react";
+import { BarcodeScanner } from "@capacitor-mlkit/barcode-scanning";
 
-const Tab2: React.FC = () => {
+const setScanningUi = (on: boolean) => {
+  const html = document.documentElement;
+  const body = document.body;
+  const app = document.querySelector("ion-app");
+  const tabbar = document.querySelector("ion-tab-bar");
+
+  if (on) {
+    html.classList.add("scanning");
+    body.classList.add("scanning");
+    app?.classList.add("scanning");
+    tabbar?.classList.add("scanning");
+  } else {
+    html.classList.remove("scanning");
+    body.classList.remove("scanning");
+    app?.classList.remove("scanning");
+    tabbar?.classList.remove("scanning");
+  }
+};
+
+const ScanQrPage: React.FC = () => {
   const [scanning, setScanning] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
-  const qrRef = useRef<Html5Qrcode | null>(null);
+  const scannedOnce = useRef(false);
 
-  useEffect(() => {
-    return () => {
-      if (qrRef.current) {
-        qrRef.current.clear().catch(() => {});
-      }
-    };
-  }, []);
-
-  const startScan = async () => {
-    setResult(null);
+  const stop = async () => {
     try {
-      const qr = new Html5Qrcode('reader');
-      qrRef.current = qr;
-      setScanning(true);
-      await qr.start(
-        { facingMode: 'environment' } as any,
-        { fps: 10, qrbox: 250 },
-        (decodedText: string) => {
-          setResult(decodedText);
-          qr.stop().then(() => qr.clear()).catch(() => {});
-          setScanning(false);
-        },
-        (errorMessage: any) => {
-          // ignore
-        }
-      );
-    } catch (e) {
-      console.error(e);
-      setScanning(false);
-    }
-  };
-
-  const stopScan = async () => {
-    if (qrRef.current) {
-      try {
-        await qrRef.current.stop();
-        await qrRef.current.clear();
-      } catch (e) {
-        // ignore
-      }
-      qrRef.current = null;
-    }
+      await BarcodeScanner.stopScan();
+    } catch {}
+    setScanningUi(false);
     setScanning(false);
   };
 
+  const start = async () => {
+    scannedOnce.current = false;
+
+    const perm = await BarcodeScanner.requestPermissions();
+    if (perm.camera !== "granted") return;
+
+    setScanningUi(true);
+    setScanning(true);
+
+    const sub = await BarcodeScanner.addListener("barcodesScanned", async (event) => {
+      if (scannedOnce.current) return;
+      const code = event.barcodes?.[0]?.rawValue;
+      if (!code) return;
+
+      scannedOnce.current = true;
+      await stop();
+      alert(code);
+    });
+
+    // await BarcodeScanner.startScan({ formats: ["QR_CODE"] });
+
+    return () => sub.remove();
+  };
+
+  useEffect(() => {
+    let cleanup: any;
+
+    (async () => {
+      cleanup = await start();
+    })();
+
+    return () => {
+      if (cleanup) cleanup();
+      stop();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>สแกน QR</IonTitle>
+    <IonPage className={scanning ? "scanning" : ""}>
+      <IonHeader className={scanning ? "scanning" : ""}>
+        <IonToolbar className={scanning ? "scanning" : ""}>
+          <IonButtons slot="start">
+            <IonBackButton defaultHref="/tabs/home" />
+          </IonButtons>
+          <IonTitle>สแกน QR ตั๋ว</IonTitle>
         </IonToolbar>
       </IonHeader>
-      <IonContent fullscreen className="ion-padding bg-white min-h-screen">
-        <div className="max-w-xl mx-auto">
-          <div id="reader" className="w-full bg-black rounded-lg overflow-hidden" style={{ minHeight: 320 }} />
-          <div className="mt-4">
-            {!scanning ? (
-              <IonButton expand="block" onClick={startScan} className="bg-blue-600">เริ่มสแกน</IonButton>
-            ) : (
-              <IonButton expand="block" color="medium" onClick={stopScan} className="bg-gray-400">หยุดสแกน</IonButton>
-            )}
+
+      <IonContent fullscreen className={scanning ? "scanning" : ""}>
+        {scanning && (
+          <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+            <div
+              style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                width: 260,
+                height: 260,
+                transform: "translate(-50%, -50%)",
+                border: "3px solid #e11d48",
+                borderRadius: 24,
+                boxShadow: "0 0 0 9999px rgba(0,0,0,0.35)",
+              }}
+            />
           </div>
-          {result && (
-            <div className="mt-4 p-3 rounded bg-green-50 border border-green-100">
-              <div className="font-semibold">ผลลัพธ์:</div>
-              <div className="text-sm text-gray-700 break-words">{result}</div>
-            </div>
-          )}
-        </div>
+        )}
       </IonContent>
     </IonPage>
   );
 };
 
-export default Tab2;
+export default ScanQrPage;

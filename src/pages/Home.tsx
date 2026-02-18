@@ -95,7 +95,7 @@ const Home: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader className="ion-no-border ion-padding-bottom" >
+      <IonHeader className="ion-no-border  " >
         <IonToolbar className='ion-no-padding' color={"primary"}>  
           <div className="flex justify-between items-center mb-4 ion-padding-horizontal ion-padding-top bg-primary text-white  ion-padding-bottom  "
            style={{borderBottomLeftRadius:"2rem" , borderBottomRightRadius:"2rem"}}>
@@ -119,14 +119,13 @@ const Home: React.FC = () => {
           </div>
         </IonToolbar>
       </IonHeader>
-      <IonContent fullscreen className="ion-padding bg-white min-h-screen">
-        
-    <div className="w-100" style={{width:"100%"}} >
+      <IonContent   className="ion-padding bg-white min-h-screen"  > 
+      <div   style={{width:"100%" ,height:"100vh" ,overflowY:"scroll",paddingBottom:"20vh"}} >
           {role === 'driver' ? (
             <div className="  pt-8">
               {!running ? (
                 <div className="  items-center"> 
-                  <IonButton expand='block' mode='ios' onClick={handleStart} className=" text-light rounded-4xl" >
+                  <IonButton expand='block' mode='ios' onClick={handleStart} className=" text-white rounded-4xl" >
                     เริ่มปฏิบัติงาน
                   </IonButton>
                 </div>
@@ -162,10 +161,9 @@ const Home: React.FC = () => {
               ยินดีต้อนรับ (role: {role || 'n/a'})
             </div>
           )}
-        </div>
 
           <br/>
-        <IonList> 
+        <IonList color='transparent'> 
           <IonToolbar color={"transparent"}>
             <IonText className="text-lg font-semibold"  slot='start' >
               <strong>เที่ยวรถ</strong>
@@ -186,6 +184,7 @@ const Home: React.FC = () => {
             />
           ))} 
         </IonList>
+        </div>
       </IonContent>
     </IonPage>
   );

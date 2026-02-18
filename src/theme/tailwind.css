@@ -19,6 +19,9 @@ html, body, #root {
 .bg-light {
   background-color: var(--ion-color-light);
 }
+.bg-light-tint {
+  background-color: var(--ion-color-light-tint);
+}
 .bg-white {
   background-color: var(--ion-color-white);
 }
@@ -69,4 +72,32 @@ html, body, #root {
 }
 .text-4xl {
   font-size: 2.25rem;
+}
+
+
+
+html.scanning,
+body.scanning,
+ion-app.scanning,
+ion-content.scanning,
+.ion-page.scanning,
+ion-page.scanning {
+  background: transparent !important;
+}
+
+ion-content.scanning {
+  --background: transparent !important;
+  --ion-background-color: transparent !important;
+}
+
+/* ซ่อน tab bar ตอนสแกน (แนะนำที่สุดสำหรับ tabs) */
+ion-tab-bar.scanning {
+  display: none !important;
+}
+
+/* ถ้า header ยังทึบ ให้ทำโปร่งใสด้วย */
+ion-header.scanning,
+ion-toolbar.scanning {
+  --background: transparent !important;
+  background: transparent !important;
 }

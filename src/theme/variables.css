@@ -50,8 +50,41 @@ http://ionicframework.com/docs/theming/ */
     --ion-color-success-shade: #116c2e;
 }
 
-body{
+/* body{
 	background: var(--ion-background-color);
 	color: var(--ion-text-color);
     font-family: var(--ion-font-family);
+} */
+
+@media (prefers-color-scheme: dark) {
+  /*
+   * Dark Colors
+   * -------------------------------------------
+   */
+  body {
+
+     /** dark **/
+    --ion-color-dark: #ffffff;
+    --ion-color-dark-rgb: 255, 255, 255;
+    --ion-color-dark-contrast: #000000;
+    --ion-color-dark-contrast-rgb: 0, 0, 0;
+    --ion-color-dark-shade: #d7d8da;
+    --ion-color-dark-tint: #f9f9f9;
+
+
+     /** light **/
+    --ion-color-light: #1e1d1d;
+    --ion-color-light-rgb: 0, 0, 0;
+    --ion-color-light-contrast: #000000;
+    --ion-color-light-contrast-rgb: 0, 0, 0;
+    --ion-color-light-shade: #1e1e1e;
+    --ion-color-light-tint: #303030;
+
+
+	--ion-color-white: #000;
+   
+	--ion-color-meduim: #cacbcc;
+	--ion-color-meduim-tint: #d8dadc;
+	--ion-color-meduim-shade: #fcfcfc;
+	}
 }

@@ -1,0 +1,25 @@
+/* เปิดกล้องไว้ด้านหลัง WebView */
+body.scanning,
+body.scanning ion-app,
+body.scanning ion-content,
+body.scanning .ion-page {
+  background: transparent !important;
+}
+
+.scan-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.scan-frame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 260px;
+  height: 260px;
+  transform: translate(-50%, -50%);
+  border: 3px solid #e11d48;   /* แดง */
+  border-radius: 24px;
+  box-shadow: 0 0 0 9999px rgba(0,0,0,0.35); /* มืดรอบๆ */
+}
