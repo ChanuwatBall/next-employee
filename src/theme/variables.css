@@ -18,6 +18,7 @@ http://ionicframework.com/docs/theming/ */
 	--ion-color-primary-rgb: 227, 32, 58;
 	--ion-color-primary-tint: #e94f5c;
     --ion-color-primary-shade: #c11b32;
+    --ion-border-radius: 8px;
 
 	--ion-color-warning: #F9E000;
 	--ion-color-warning-rgba: 249, 224, 0; 

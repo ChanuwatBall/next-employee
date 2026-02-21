@@ -46,6 +46,15 @@ html, body, #root {
 .text-bold {
   font-weight: bold;
 }
+.text-bold-400 {
+  font-weight: 400;
+}
+.text-bold-500 {
+  font-weight: 500;
+}
+.text-bold-600 {
+  font-weight: 600;
+}
 .text-sm {
   font-size: 0.875rem;
 }
@@ -73,7 +82,9 @@ html, body, #root {
 .text-4xl {
   font-size: 2.25rem;
 }
-
+.ion-radius{
+  border-radius: var(--ion-border-radius);
+}
 
 
 html.scanning,
@@ -89,15 +100,13 @@ ion-content.scanning {
   --background: transparent !important;
   --ion-background-color: transparent !important;
 }
-
-/* ซ่อน tab bar ตอนสแกน (แนะนำที่สุดสำหรับ tabs) */
+/*  
 ion-tab-bar.scanning {
   display: none !important;
 }
-
-/* ถ้า header ยังทึบ ให้ทำโปร่งใสด้วย */
+ 
 ion-header.scanning,
 ion-toolbar.scanning {
   --background: transparent !important;
   background: transparent !important;
-}
+} */

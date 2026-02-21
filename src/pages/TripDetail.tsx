@@ -90,7 +90,7 @@ const TripDetail: React.FC = () => {
       </IonHeader>
       <IonContent color={"light"} className="ion-no-padding min-h-screen" style={{ position: "relative" }} >
         <div className="grid grid-rows-2   ion-padding-horizontal ion-padding-top bg-primary text-white  ion-padding-bottom  "
-          style={{ borderBottomLeftRadius: "4rem", borderBottomRightRadius: "4rem", paddingBottom: "4rem" }} >
+          style={{ borderBottomLeftRadius: "3rem", borderBottomRightRadius: "3rem", paddingBottom: "4rem" }} >
 
           <div className='grid grid-cols-3 gap-2 text-light ion-margin-horizontal ' >
             <div>

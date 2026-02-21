@@ -12,8 +12,8 @@ import {
 import { IonReactRouter } from '@ionic/react-router';
 import { ellipse, home, square, triangle } from 'ionicons/icons';
 import Home from './pages/Home';
-import Tab2 from './pages/Tab2';
-import Tab3 from './pages/Tab3';
+import ScanQrPage from './pages/ScanQrPage';
+import Profile from './pages/Profile';
 import Trips from './pages/Trips';
 import TripDetail from './pages/TripDetail';
 import TicketDetail from './pages/TicketDetail';
@@ -73,11 +73,11 @@ const App: React.FC = () => {
             <Route exact path="/home">
               {isAuthenticated ? <Home /> : <Redirect to="/signin" />}
             </Route>
-            <Route exact path="/tab2">
-              {isAuthenticated ? <Tab2 /> : <Redirect to="/signin" />}
+            <Route exact path="/scanQrPage">
+              {isAuthenticated ? <ScanQrPage /> : <Redirect to="/signin" />}
             </Route>
-            <Route path="/tab3">
-              {isAuthenticated ? <Tab3 /> : <Redirect to="/signin" />}
+            <Route path="/profile">
+              {isAuthenticated ? <Profile /> : <Redirect to="/signin" />}
             </Route>
             <Route exact path="/trips">
               {isAuthenticated ? <Trips /> : <Redirect to="/signin" />}
@@ -99,12 +99,12 @@ const App: React.FC = () => {
                 {/* <IonIcon aria-hidden="true" icon={home} /> */}
                 <IonLabel>Home</IonLabel>
               </IonTabButton>
-              <IonTabButton tab="tab2" href="/tab2">
+              <IonTabButton tab="tab2" href="/scanQrPage">
               <FontAwesomeIcon icon={faQrcode} />
                 {/* <IonIcon aria-hidden="true" icon={ellipse} /> */}
                 <IonLabel>Scan</IonLabel>
               </IonTabButton>
-              <IonTabButton tab="tab3" href="/tab3">
+              <IonTabButton tab="tab3" href="/profile">
               <FontAwesomeIcon icon={faUser} />
                 {/* <IonIcon aria-hidden="true" icon={square} /> */}
                 <IonLabel>Profile</IonLabel>

@@ -8,7 +8,7 @@ const Sigin: React.FC = () => {
     const doLogin = () => {
         localStorage.setItem('isAuthenticated', 'true');
         localStorage.setItem('username', username || '');
-        localStorage.setItem('role', role);
+        localStorage.setItem('role', "busconductor");
         window.location.href = '/home';
     };
 

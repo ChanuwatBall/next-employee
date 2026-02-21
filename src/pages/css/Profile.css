@@ -1,0 +1,21 @@
+
+.avatar-container {
+    position: relative;
+    display: inline-block;
+}
+.avatar-container ion-button {
+    position: absolute;
+    bottom: 0px;
+    right: 0px; 
+}
+.avatarimg {
+  width: 8rem;
+  height: 8rem; 
+  object-fit: cover;
+  border-radius:  20px;
+}
+
+.line-bottom-dashed {
+  border-bottom: 1px dashed var(--ion-color-light-shade);
+  padding: .8rem 0 .5rem 0 ;
+}
