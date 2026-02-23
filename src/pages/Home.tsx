@@ -8,6 +8,7 @@ import { useHistory } from 'react-router-dom';
 import './css/Home.css';
 import moment from 'moment';
 import 'moment/locale/th'; // import Thai locale for moment
+import { BouceAnimation } from '../components/Animations';
 moment.locale('th'); // set Thai locale for date formatting
 
 const mockTrips = [
@@ -134,7 +135,8 @@ const Home: React.FC = () => {
       <IonContent className="ion-padding bg-white min-h-screen"  >
         <div style={{ width: "100%", height: "100vh", overflowY: "scroll", paddingBottom: "20vh" }} >
           <br/>
-          <IonSearchbar
+          <IonSearchbar 
+            mode='ios'
             placeholder="ค้นหาเที่ยวรถ..."
             className='ion-no-padding search-trip'
             value={query}
@@ -148,9 +150,9 @@ const Home: React.FC = () => {
               </IonText>
               <IonText className="text-sm  " color={"primary"} slot='end'>ทั้งหมด </IonText>
             </IonToolbar>
-            {trips.map(trip => (
-              <CardTrip
-                key={trip.id}
+            {trips.map((trip , index) => (
+            <BouceAnimation duration={(index+2)/10} className="card-executive"  key={trip.id}> 
+              <CardTrip 
                 title={trip.title} time={trip.time}
                 arrive={trip.arrive}
                 disabledSeat={trip.disabledSeat}
@@ -160,6 +162,7 @@ const Home: React.FC = () => {
                 isOnBoard={trip.isOnBoard}
                 select={() => history.push(`/trip/${trip.id}`)}
               />
+            </BouceAnimation>
             ))}
           </IonList>
         </div>

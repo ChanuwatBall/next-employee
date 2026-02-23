@@ -1,0 +1,8 @@
+.signin-input{
+    border: 1px solid var(--ion-color-light-shade);
+    border-radius: 1rem;
+    margin: .5rem 0 .5rem 0;
+    padding: .3rem;
+    --padding-start:.5rem;
+    --padding-end:.5rem;
+}
