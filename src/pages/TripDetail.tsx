@@ -5,6 +5,7 @@ import moment, { duration } from 'moment';
 import React from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import './css/TripDetail.css';
+import { BouceAnimation } from '../components/Animations';
 
 const TripDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -79,9 +80,9 @@ const TripDetail: React.FC = () => {
           <div className="grid grid-rows-1 ion-padding-horizontal ion-padding-top bg-primary text-white  "
             >
             <div>
-              <IonButton fill='clear' onClick={()=>{history.goBack()}} >
-                <FontAwesomeIcon icon={faArrowLeft} className='text-light  ' />  &nbsp;&nbsp;
-                <IonText className='text-light' >Trip Details</IonText>
+              <IonButton fill='clear' style={{color:"#FFF"}} onClick={()=>{history.goBack()}} >
+                <FontAwesomeIcon icon={faArrowLeft}  />  &nbsp;&nbsp;
+                <IonText  >Trip Details</IonText>
               </IonButton>
             </div>
 
@@ -94,28 +95,29 @@ const TripDetail: React.FC = () => {
 
           <div className='grid grid-cols-3 gap-2 text-light ion-margin-horizontal ' >
             <div>
-              <IonLabel style={{ fontWeight: "bolder", fontSize: "1.7em" }} >{trip.departure}</IonLabel>
+              <IonLabel style={{ fontWeight: "bolder", fontSize: "1.7em" ,color:"#FFF" }} >{trip.departure}</IonLabel>
             </div>
             <div className='ion-text-center flex items-center justify-center ' >
-              <FontAwesomeIcon icon={faArrowRight} className='text-white' style={{ fontWeight: "bolder", fontSize: "1.2em" }} />
+              <FontAwesomeIcon icon={faArrowRight}   style={{ fontWeight: "bolder", fontSize: "1.2em" ,color:"#FFF"}} />
             </div>
             <div className='ion-text-right'>
-              <IonLabel style={{ fontWeight: "bolder", fontSize: "1.7em" }}>{trip.destination}</IonLabel>
+              <IonLabel style={{ fontWeight: "bolder", fontSize: "1.7em" ,color:"#FFF"  }}>{trip.destination}</IonLabel>
             </div>
           </div>
           <div className='  flex justify-center items-center w-full' >
-            <div className='text-light' style={{ width: "10%" }}><FontAwesomeIcon icon={faCarSide} /> </div>
+            <div className='text-light' style={{ width: "10%" , color:"white"}}><FontAwesomeIcon icon={faCarSide} /> </div>
             <div style={{ width: "79%", borderWidth: "1px", borderColor: "#FFF" }} className='border-dashed' ></div>
           </div>
           <div className='ion-margin-horizontal ion-text-right ' >
-            <IonLabel className='text-light' style={{ fontSize: "0.8em" }} >{trip.tripdate && moment(trip.tripdate).format('DD MMMM , YYYY')}</IonLabel>
+            <IonLabel className='text-light' style={{ fontSize: "0.8em", color:"white" }} >{trip.tripdate && moment(trip.tripdate).format('DD MMMM , YYYY')}</IonLabel>
           </div>
-        </div>
+        </div>  
         <div style={{width:"100%",marginTop: "-2rem",  flexDirection:"column", alignItems:"center", justifyContent:"center"}} 
          className='flex flex-column items-center justify-center '
          >
-          <div className='bg-white grid grid-cols-3 gap-4 shadow-lg  rounded-lg p-4  shadow-md '
-            style={{ borderRadius: "1rem",   zIndex: 99 , width:"90%", boxShadow: "rgba(100, 100, 111, 0.2) 0px 7px 29px 0px" }} >
+
+          <BouceAnimation duration={0.1} className="card-executive bg-white grid grid-cols-3 gap-4  rounded-lg  raduis-shadow "  key={trip.id} 
+           >
             <div className='ion-text-center'> 
               <p style={{lineHeight:"1.5em"}} >
                 <small className='text-meduim'>ต้นทางรถอก</small>  <br/>
@@ -134,11 +136,11 @@ const TripDetail: React.FC = () => {
                 <IonLabel className='text-2xl '  color={"dark"}><strong>{trip.arrive}</strong></IonLabel> <br/>
                 <IonLabel className='text-sm text-meduim' >{trip.destination}</IonLabel>
               </p>
-            </div>
-          </div><br/><br/>
+            </div> 
+          </BouceAnimation>
+          <br/><br/>
 
-          <div className='bg-white grid grid-rows-3 gap-4 shadow-md  rounded-lg p-4  shadow-md ion-padding '
-            style={{ borderRadius: "1rem",   zIndex: 99 , width:"90%", border:"1px solid #ececec", boxShadow:" rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px"}} >
+          <BouceAnimation duration={0.4} delay={0.2} className='card-stations bg-white grid grid-rows-3 gap-4 shadow-md  rounded-lg p-4  shadow-md ion-padding '  >
             <div>
               <IonText color={"primary"}>
                <FontAwesomeIcon icon={faCarSide} className='text-md ' />
@@ -151,24 +153,24 @@ const TripDetail: React.FC = () => {
             <div>
               <IonText className='text-xs' color={"medium"} >สิ่งอำนวยความสะดวก : {trip.facilities}</IonText> <br/>
             </div>
-          </div>
+          </BouceAnimation>
 
           <br/> 
-          <div  className='ion-text-left ion-padding' style={{width:"100%"}}  >
-          <IonLabel className='text-dark text-sm text-bold ion-margin-start' >
-            จุดรับ & จุดขึ้น
-          </IonLabel> 
-          </div> 
+          <BouceAnimation duration={0.4} delay={0.5}  className='ion-text-left ion-padding' style={{width:"100%"}}  >
+            <IonLabel className='text-dark text-sm text-bold ion-margin-start' >
+              จุดรับ & จุดขึ้น
+            </IonLabel> 
+          </BouceAnimation>
 
-          <div className='bg-white grid grid-rows-3 gap-4 shadow-md  rounded-lg p-4  shadow-md ion-padding '
-            style={{ borderRadius: "1rem",   zIndex: 99 , width:"90%", border:"1px solid #ececec", boxShadow:" rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px"}} >
+          <BouceAnimation duration={0.4} delay={0.5} className='card-stations bg-white grid grid-rows-3 gap-4 shadow-md  rounded-lg p-4  shadow-md ion-padding '
+             >
               {trip.tripStation.map((station) => (
                 <StationTrip key={station.id} station={station} />
               ))} 
-            </div>
+          </BouceAnimation>
         </div>
         <div className='bottom-div' >
-          <IonButton expand='block' mode='ios'   className=" text-light rounded-4xl" 
+          <IonButton expand='block' mode='ios'   className=" text-light rounded-4xl"  style={{color:"#FFF"}}
            onClick={()=>{history.push("/plan/"+trip?.id)}} >
             ที่นั่งทั้งหมด
           </IonButton>
@@ -184,7 +186,7 @@ export default TripDetail;
 
 const StationTrip: React.FC<{ station: any }> = ({ station }) => {
   return (
-    <div className='grid grid-cols-12 gap-4 ' style={{padding:".3rem 0 .3rem .3rem" , borderBottom:"1px solid #f6f6f6"}} >
+    <div className='grid grid-cols-12 gap-4 border-bottom' style={{padding:".3rem 0 .3rem .3rem" , }} >
       <div className='flex flex-center items-center ' >
         <div className=' rounded-full bg-tertiary-tint flex items-center justify-center  ' style={{width:"2rem", height:"2rem"}} > 
          <IonText color={"primary"}  className='text-sm' >

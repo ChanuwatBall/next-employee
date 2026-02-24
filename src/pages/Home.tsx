@@ -113,16 +113,16 @@ const Home: React.FC = () => {
             style={{ borderBottomLeftRadius: "2rem", borderBottomRightRadius: "2rem" }}>
             <div className='ion-padding-bottom'>
               <IonText color={"light"} >
-                <h2 className="text-xl font-semibold ">
+                <h2 className="text-xl font-semibold " style={{ color: "#FFF" }} >
                   สวัสดี {hellotime}
                 </h2>
               </IonText>
               <IonText color={"light"} >
-                <div className="text-sm text-gray-500"> {moment().format('DD MMMM ,YYYY')} </div>
+                <div className="text-sm text-gray-500" style={{color:"#FFF"}}> {moment().format('DD MMMM ,YYYY')} </div>
               </IonText>
             </div>
-            <div className="p-2 bg-gray-100 rounded-full bg-light text-white shadow flex items-center justify-center  "
-              style={{ width: "3rem", height: "3rem", fontSize: "1.5rem" }}
+            <div className="p-2 bg-gray-100 rounded-full text-white shadow flex items-center justify-center  "
+              style={{ width: "3rem", height: "3rem", fontSize: "1.5rem", backgroundColor: "#FFF" }}
               onClick={() => { history.push("/scanQrPage") }}
             >
               <IonText color={"primary"} >
@@ -143,9 +143,9 @@ const Home: React.FC = () => {
             onIonInput={(e: any) => searchMockupTrip(e.detail?.value ?? '')}
           />
           <br />
-          <IonList color='transparent'>
+          {/* <IonList color='transparent'> */}
             <IonToolbar color={"transparent"}>
-              <IonText className="text-lg font-semibold" slot='start' >
+              <IonText className="text-lg font-semibold" slot='start' color={"dark"} >
                 <strong>เที่ยวรถ</strong>
               </IonText>
               <IonText className="text-sm  " color={"primary"} slot='end'>ทั้งหมด </IonText>
@@ -164,7 +164,7 @@ const Home: React.FC = () => {
               />
             </BouceAnimation>
             ))}
-          </IonList>
+          {/* </IonList> */}
         </div>
       </IonContent>
     </IonPage>

@@ -85,6 +85,9 @@ html, body, #root {
 .ion-radius{
   border-radius: var(--ion-border-radius);
 }
+.border-light-tint{
+  border-color: var(--ion-color-light-tint);
+}
 
 
 html.scanning,
