@@ -1,16 +1,18 @@
-import { faArrowRight, faCarSide } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faArrowRight, faCarSide } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonButton, IonGrid, IonRow, IonCol, IonButtons, IonIcon, IonText, IonLabel, IonList, IonItem, IonItemOptions, IonItemOption, IonItemSliding } from '@ionic/react';
+import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonButton, IonGrid, IonRow, IonCol, IonButtons, IonIcon, IonText, IonLabel, IonList, IonItem, IonItemOptions, IonItemOption, IonItemSliding, useIonActionSheet } from '@ionic/react';
 import { color } from 'framer-motion';
-import { arrowBackCircleOutline } from 'ionicons/icons';
+import { arrowBackCircleOutline, callOutline, chatbubbleEllipses, checkmarkCircleOutline } from 'ionicons/icons';
 import moment from 'moment';
-import React from 'react';
+import React, { use } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import { BouceAnimation } from '../components/Animations';
 
 const TicketDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const history = useHistory();
+  const [actionSheet , dimissActionSheet] =  useIonActionSheet();
+
   const ticket = {
     id: "OGHTROHTRJHO",
     trip: {
@@ -35,16 +37,39 @@ const TicketDetail: React.FC = () => {
     code: "TICKET12345",
   }
 
+  const actionPassenger=(p:any)=>{
+    actionSheet({
+      header: `ที่นั่ง ${p.seat} - ${p.name}`, 
+      buttons:[
+        {text:"โทรติดต่อผู้โดยสาร", icon: callOutline , handler:()=>{ window.open(`tel:${p.phone}`) }},
+        {text:"ส่งข้อความถึงผู้โดยสาร", icon:  chatbubbleEllipses, handler:()=>{ window.open(`sms:${p.phone}`) }},
+        {text:"เช็คอินผู้โดยสาร", icon: checkmarkCircleOutline , handler:()=>{  }},
+        {text:"ยกเลิก", role:"cancel" }
+      ]
+    })
+  }
+
   return (
     <IonPage>
       <IonHeader className="ion-no-border" mode='md'>
         <IonToolbar className='on-text-center ' color={"primary"} >
-          <IonButtons slot="start">
+          {/* <IonButtons slot="start">
             <IonButton style={{color:"#FFF"}} onClick={() => { history.goBack() }} >
               <IonIcon icon={arrowBackCircleOutline}  />
             </IonButton>
           </IonButtons>
-          <IonLabel className="text-md font-semibold" style={{color:"#FFF"}} >รายละเอียดตั๋ว</IonLabel>
+          <IonLabel className="text-md font-semibold" style={{color:"#FFF"}} >รายละเอียดตั๋ว</IonLabel> */}
+          <IonToolbar className='ion-no-padding' color={"primary"}>
+            <div className="grid grid-rows-1 ion-padding-horizontal ion-padding-top bg-primary text-white  ">
+              <div>
+                <IonButton fill='clear' style={{ color: "#FFF" }} onClick={() => { history.goBack() }} >
+                  <FontAwesomeIcon icon={faArrowLeft} />  &nbsp;&nbsp;
+                  <IonText  >รายละเอียดตั๋ว</IonText>
+                </IonButton>
+              </div>
+
+            </div>
+          </IonToolbar>
         </IonToolbar>
       </IonHeader>
       <IonContent color={"light"} className="ion-no-padding min-h-screen" style={{ position: "relative" }} >
@@ -53,21 +78,21 @@ const TicketDetail: React.FC = () => {
 
           <div className='grid grid-cols-3 gap-2 text-light ion-margin-horizontal ' >
             <div>
-              <IonLabel style={{ fontWeight: "bolder", fontSize: "1.7em" , color:"white" }} >{ticket.trip.departure}</IonLabel>
+              <IonLabel style={{ fontWeight: "bolder", fontSize: "1.7em", color: "white" }} >{ticket.trip.departure}</IonLabel>
             </div>
             <div className='ion-text-center flex items-center justify-center ' >
-              <FontAwesomeIcon icon={faArrowRight} className='text-white' style={{ fontWeight: "bolder", fontSize: "1.2em" , color:"white"}} />
+              <FontAwesomeIcon icon={faArrowRight} className='text-white' style={{ fontWeight: "bolder", fontSize: "1.2em", color: "white" }} />
             </div>
             <div className='ion-text-right'>
-              <IonLabel style={{ fontWeight: "bolder", fontSize: "1.7em" , color:"white"}}>{ticket.trip.destination}</IonLabel>
+              <IonLabel style={{ fontWeight: "bolder", fontSize: "1.7em", color: "white" }}>{ticket.trip.destination}</IonLabel>
             </div>
           </div>
           <div className='  flex justify-center items-center w-full' >
-            <div className='text-light' style={{ width: "10%" , color:"white"}}><FontAwesomeIcon icon={faCarSide} /> </div>
+            <div className='text-light' style={{ width: "10%", color: "white" }}><FontAwesomeIcon icon={faCarSide} /> </div>
             <div style={{ width: "79%", borderWidth: "1px", borderColor: "#FFF" }} className='border-dashed' ></div>
           </div>
           <div className='ion-margin-horizontal ion-text-right ' >
-            <IonLabel className='text-light' style={{ fontSize: "0.8em", color:"white" }} >{ticket.trip.tripdate && moment(ticket.trip.tripdate).format('DD MMMM , YYYY')}</IonLabel>
+            <IonLabel className='text-light' style={{ fontSize: "0.8em", color: "white" }} >{ticket.trip.tripdate && moment(ticket.trip.tripdate).format('DD MMMM , YYYY')}</IonLabel>
           </div>
         </BouceAnimation>
         <div style={{ width: "100%", marginTop: "-2rem", flexDirection: "column", alignItems: "center", justifyContent: "center", paddingBottom: " 15vh", }}
@@ -98,33 +123,24 @@ const TicketDetail: React.FC = () => {
           <BouceAnimation duration={0.4} delay={0.5} className='bg-white  ion-padding border-light-tint'
             style={{
               borderRadius: "1rem", zIndex: 99, width: "90%",
-              borderWidth: "1px", borderStyle: "solid",  
+              borderWidth: "1px", borderStyle: "solid",
             }} >
             <IonList>
               {
-                ticket.passengers.map(p =>
-                  <IonItemSliding key={p.id}  >
-                    <IonItem key={p.id} className='  ion-text-wrap' >
+                ticket.passengers.map(p => 
+                    <IonItem key={p.id} className='  ion-text-wrap' onClick={()=>{actionPassenger(p)}} >
                       <IonLabel>
                         <IonText className='ion-margin-end'>ที่นั่ง {p.seat}</IonText> <IonText> ชื่อ {p.name}</IonText> <br />
                         หมายเลขโทรศัพท์  {p.phone}
                       </IonLabel>
-                    </IonItem>
-                    <IonItemOptions side="end">
-                      <IonItemOption>
-                        <IonLabel color={"dark"}>
-                          เช็คอินผู้โดยสาร
-                        </IonLabel>
-                      </IonItemOption>
-                    </IonItemOptions>
-                  </IonItemSliding>
+                    </IonItem> 
                 )
               }
             </IonList>
           </BouceAnimation>
 
           <div className='bottom-div' >
-            <IonButton expand='block' mode='ios' className=" text-light rounded-4xl" style={{color:"#FFF"}}
+            <IonButton expand='block' mode='ios' className=" text-light rounded-4xl" style={{ color: "#FFF" }}
             >
               เช็คอินผู้โดยสารทั้งหมด
             </IonButton>

@@ -1,13 +1,12 @@
  
 import { motion } from 'framer-motion';
 
-export function BouceAnimation({ children , duration ,className , delay = 0 , style}:any) {
+export function BouceAnimation({ children , duration ,className , delay = 0 }:any) {
   
   return (
     <motion.div  
      initial={{ opacity: 0, scale: 0 }}
      animate={{ opacity: 1, scale: 1 }}  
-     style={style}
      className={className ? className :" "}
      transition={{
          duration:  duration, 

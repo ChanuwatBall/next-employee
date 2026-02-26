@@ -16,36 +16,43 @@ const Sigin: React.FC = () => {
 
     return (
         <IonPage>
-            <IonContent className="ion-padding flex items-center justify-center bg-white min-h-screen">
-                <div className="w-full max-w-md p-6 rounded-lg shadow-md bg-gray-50   ">
+            <IonContent className=" flex items-center justify-center bg-white min-h-screen">
+                <div 
+                    className="w-full max-w-md p-6 rounded-lg shadow-md bg-gray-50 ion-padding" 
+                    style={{ backgroundImage: 'url(../assets/svg/bus-seat.svg)', backgroundSize: 'cover', backgroundPosition: 'center',height:"100%" }} 
+                >
                     
-                    <div className="grid grid-rows-5 ion-padding">
+                    <div className="grid  ion-padding"><br/><br/><br/><br/>
                         <div className="logo-section w-full flex items-center" style={{flexDirection:"column",marginBottom:"3rem"}} >
                             <IonImg src="../assets/svg/logo.svg"  style={{width:"30vw" , maxWidth:"200px"}} /> <br/>
-                            <span className="text-sm font-semibold text-gray-800 "> เข้าสู่ระบบเพื่อจัดการเที่ยวการเดินทาง</span>
+                            <span className="text-sm font-semibold text-gray-800 " style={{color:"black"}}> เข้าสู่ระบบเพื่อจัดการเที่ยวการเดินทาง</span>
                         </div> 
                         <div className="ion-margin-top">
-                            <IonLabel>Username</IonLabel>
+                            <IonLabel style={{color:"black"}}>Username</IonLabel>
                             <IonInput 
                              value={username} 
+                             placeholder="Username"
                              className="signin-input"
                              onIonChange={e => 
                              setUsername(String(e.detail.value || ''))} 
                             ></IonInput> 
-                        </div>
+                        </div><br/>
                          <div >
-                            <IonLabel>Password</IonLabel>
+                            <IonLabel style={{color:"black"}}>Password</IonLabel>
                             <IonInput 
                              value={password} 
                              type="password"
+                             placeholder="Password"
                              className="signin-input"
                              onIonChange={e => 
                              setPassword(String(e.detail.value || ''))} 
                             >
                                  <IonInputPasswordToggle slot="end"></IonInputPasswordToggle></IonInput> 
-                        </div>
+                        </div><br/><br/>
                         <div className="mt-2">
-                            <IonButton expand="block" mode="ios" onClick={doLogin} className="bg-blue-600">เข้าสู่ระบบ</IonButton>
+                            <IonButton expand="block" mode="ios" onClick={doLogin} className="bg-blue-600">
+                                <span  style={{color:"white"}} >เข้าสู่ระบบ</span>
+                            </IonButton>
                         </div> 
 
                     </div> 

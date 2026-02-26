@@ -5,4 +5,5 @@
     padding: .3rem;
     --padding-start:.5rem;
     --padding-end:.5rem;
+    background-color: var(--ion-color-white);
 }

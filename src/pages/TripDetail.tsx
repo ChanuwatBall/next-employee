@@ -1,6 +1,6 @@
 import { faArrowDown, faArrowLeft, faArrowRight, faArrowUp, faCarSide, faLocationDot, faQrcode } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonButton, IonGrid, IonRow, IonCol, IonText, IonBackButton, IonLabel, IonIcon, IonChip } from '@ionic/react';
+import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonButton, IonGrid, IonRow, IonCol, IonText, IonBackButton, IonLabel, IonIcon, IonChip, IonAccordion, IonAccordionGroup } from '@ionic/react';
 import moment, { duration } from 'moment';
 import React from 'react';
 import { useHistory, useParams } from 'react-router-dom';
@@ -10,6 +10,7 @@ import { BouceAnimation } from '../components/Animations';
 const TripDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const history = useHistory();
+  const [stationacc, setStationAcc] = React.useState<string>("");
 
   // mock data to match mockup
   const trip = {
@@ -156,18 +157,22 @@ const TripDetail: React.FC = () => {
           </BouceAnimation>
 
           <br/> 
+          <div style={{width:"100%"}} >
           <BouceAnimation duration={0.4} delay={0.5}  className='ion-text-left ion-padding' style={{width:"100%"}}  >
             <IonLabel className='text-dark text-sm text-bold ion-margin-start' >
               จุดรับ & จุดขึ้น
             </IonLabel> 
           </BouceAnimation>
-
-          <BouceAnimation duration={0.4} delay={0.5} className='card-stations bg-white grid grid-rows-3 gap-4 shadow-md  rounded-lg p-4  shadow-md ion-padding '
-             >
+          </div>
+  
+          <BouceAnimation className=" card-stations "
+          duration={0.4} delay={0.5}  >
+            <IonAccordionGroup className=' ion-margin  bg-white' value={stationacc}  >
               {trip.tripStation.map((station) => (
                 <StationTrip key={station.id} station={station} />
               ))} 
-          </BouceAnimation>
+              </IonAccordionGroup>
+          </BouceAnimation>  
         </div>
         <div className='bottom-div' >
           <IonButton expand='block' mode='ios'   className=" text-light rounded-4xl"  style={{color:"#FFF"}}
@@ -186,7 +191,8 @@ export default TripDetail;
 
 const StationTrip: React.FC<{ station: any }> = ({ station }) => {
   return (
-    <div className='grid grid-cols-12 gap-4 border-bottom' style={{padding:".3rem 0 .3rem .3rem" , }} >
+    <IonAccordion value={station.id} className='ion-no-padding' >
+    <div slot='header' className='grid grid-cols-12 gap-4 border-bottom' style={{padding:".3rem 0 .3rem .3rem" , }} >
       <div className='flex flex-center items-center ' >
         <div className=' rounded-full bg-tertiary-tint flex items-center justify-center  ' style={{width:"2rem", height:"2rem"}} > 
          <IonText color={"primary"}  className='text-sm' >
@@ -211,5 +217,12 @@ const StationTrip: React.FC<{ station: any }> = ({ station }) => {
         </IonChip> 
       </div>
     </div>
+    <div slot='content' className='ion-padding' >
+      <IonText className='text-sm text-meduim' color={"dark"} >
+       <FontAwesomeIcon icon={faArrowUp} />   ผู้โดยสารที่ขึ้นสถานี นี้ : {station.passengerOnboard} คน <br/>
+        <FontAwesomeIcon icon={faArrowDown} />   ผู้โดยสารที่ลงสถานี นี้ : {station.passengerOffboard} คน <br/>
+      </IonText>
+    </div>
+    </IonAccordion>
   );
 }
