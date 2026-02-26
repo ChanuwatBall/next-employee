@@ -64,9 +64,9 @@ const App: React.FC = () => {
       <IonReactRouter>
         <IonTabs>
           <IonRouterOutlet>
-            <Route path="/plan/:id" exact>
+            {/* <Route path="/plan/:id" exact>
               <PlanChair />
-            </Route>
+            </Route> */}
             <Route exact path="/signin">
               <Sigin />
             </Route>

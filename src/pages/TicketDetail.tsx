@@ -73,10 +73,11 @@ const TicketDetail: React.FC = () => {
         </IonToolbar>
       </IonHeader>
       <IonContent color={"light"} className="ion-no-padding min-h-screen" style={{ position: "relative" }} >
-        <BouceAnimation duration={0.4} delay={0.2} className="grid grid-rows-2   ion-padding-horizontal ion-padding-top bg-primary text-white  ion-padding-bottom  "
-          style={{ borderBottomLeftRadius: "3rem", borderBottomRightRadius: "3rem", paddingBottom: "4rem" }} >
+        <BouceAnimation duration={0.4} delay={0.2}  >
+            <div className="grid grid-rows-2   ion-padding-horizontal ion-padding-top bg-primary text-white  ion-padding-bottom  "
+          style={{ borderBottomLeftRadius: "3rem", borderBottomRightRadius: "3rem", paddingBottom: "4rem" }}>
 
-          <div className='grid grid-cols-3 gap-2 text-light ion-margin-horizontal ' >
+          <div className='grid grid-cols-3  text-light ion-margin-horizontal ' style={{gap:2}} >
             <div>
               <IonLabel style={{ fontWeight: "bolder", fontSize: "1.7em", color: "white" }} >{ticket.trip.departure}</IonLabel>
             </div>
@@ -93,13 +94,17 @@ const TicketDetail: React.FC = () => {
           </div>
           <div className='ion-margin-horizontal ion-text-right ' >
             <IonLabel className='text-light' style={{ fontSize: "0.8em", color: "white" }} >{ticket.trip.tripdate && moment(ticket.trip.tripdate).format('DD MMMM , YYYY')}</IonLabel>
+          </div> 
           </div>
         </BouceAnimation>
+
+
         <div style={{ width: "100%", marginTop: "-2rem", flexDirection: "column", alignItems: "center", justifyContent: "center", paddingBottom: " 15vh", }}
           className='flex flex-column items-center justify-center '
         >
-          <BouceAnimation duration={0.4} delay={0.3} className='bg-white grid grid-cols-2 gap-4  ion-padding'
-            style={{ borderRadius: "1rem", zIndex: 99, width: "90%", boxShadow: "rgba(100, 100, 111, 0.2) 0px 7px 29px 0px", gap: "0.5rem" }} >
+          <BouceAnimation duration={0.4} delay={0.3} >
+              <div className='bg-white grid grid-cols-2 gap-4  ion-padding'
+            style={{ borderRadius: "1rem", zIndex: 99, width: " 90vw", maxWidth:"720px", boxShadow: "rgba(100, 100, 111, 0.2) 0px 7px 29px 0px", gap: "0.5rem" }} >
             <div className='bg-light-tint ion-padding ion-radius' >
               <IonLabel className='text-xs ' color={"dark"} >รถออกจากต้นทาง</IonLabel><br />
               <IonLabel className='text-2xl' color={"dark"} style={{ fontWeight: 600 }} >{ticket.trip.time}</IonLabel> <br />
@@ -118,13 +123,16 @@ const TicketDetail: React.FC = () => {
               }
               <br /> <IonLabel className='text-xs text-meduim' color={"dark"} >ที่นั่งของผู้โดยสาร</IonLabel>
             </div>
+            </div>
           </BouceAnimation>
           <br />
-          <BouceAnimation duration={0.4} delay={0.5} className='bg-white  ion-padding border-light-tint'
+          <BouceAnimation duration={0.4} delay={0.5} >
+              <div className='bg-white  ion-padding border-light-tint'
             style={{
-              borderRadius: "1rem", zIndex: 99, width: "90%",
+              borderRadius: "1rem", zIndex: 99, width: "90vw", maxWidth:"720px",
               borderWidth: "1px", borderStyle: "solid",
             }} >
+
             <IonList>
               {
                 ticket.passengers.map(p => 
@@ -137,6 +145,7 @@ const TicketDetail: React.FC = () => {
                 )
               }
             </IonList>
+              </div>
           </BouceAnimation>
 
           <div className='bottom-div' >
