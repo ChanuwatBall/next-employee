@@ -2,87 +2,125 @@ import { faArrowDown, faArrowLeft, faArrowRight, faArrowUp, faCarSide, faLocatio
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonButton, IonGrid, IonRow, IonCol, IonText, IonBackButton, IonLabel, IonIcon, IonChip, IonAccordion, IonAccordionGroup } from '@ionic/react';
 import moment, { duration } from 'moment';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import './css/TripDetail.css';
 import { BouceAnimation } from '../components/Animations';
+import { supabase } from '../supabase/supabase';
+
+import { Trip } from '../types/trip';
 
 const TripDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const history = useHistory();
   const [stationacc, setStationAcc] = React.useState<string>("");
+  const [trip, setTrip] = React.useState<Trip | null>(null);
 
-  // mock data to match mockup
-  const trip = {
-    id: '1',
-    title: 'โคราช - กทม.',
-    time: '07:20',
-    arrive: '09:40',
-    tripdate: "2024-06-20",
-    passsengerOnboard: 25,
-    totalPassenger: 37,
-    disabledSeat: 3,
-    isOnBoard: true,
-    bus: 'Premium Bus',
-    seats: 40,
-    code: 'TRIP12345',
-    departure: "โคราช",
-    destination: "กรุงเทพฯ",
-    duration: "2 ชม. 20 นาที",  
-    facilities: "WiFi, ปลั๊กชาร์จ, ผ้าห่ม, น้ำดื่ม, ขนม",
-    tripStation: [
-      {
-        id: '1',
-        name: 'บขส. หมอชิตใหม่ ช่องจำหน่าตั๋ว 58',
-        time: '07:20',
-        type: 'departure',
-        passengerOnboard: 3,
-        passengerOffboard: 0,
-      },
-      {
-        id: '2',
-        name: 'บขส. หมอชิตใหม่ ชานชลา 119',
-        time: '08:00',
-        type: 'stopover',
-        passengerOnboard: 2,
-        passengerOffboard: 0,
-      },
-      {
-        id: '3',
-        name: 'รังสิต หน้า ม.กรุงเทพฯ',
-        time: '09:40',
-        type: 'arrival',
-        passengerOnboard: 1 ,
-        passengerOffboard: 0,
-      },
-      {
-        id: '4',
-        name: 'นวนคร รพ.การุญเวช',
-        time: '09:40',
-        type: 'arrival',
-        passengerOnboard: 0 ,
-        passengerOffboard: 1,
-      },
-      {
-        id: '5',
-        name: 'วังน้อย (จุดปั๊มใบเวลา)',
-        time: '10:00',
-        type: 'arrival',
-        passengerOnboard: 0 ,
-        passengerOffboard: 0,
+  // // mock data to match mockup
+  // const trip = {
+  //   id: '1',
+  //   title: 'โคราช - กทม.',
+  //   time: '07:20',
+  //   arrive: '09:40',
+  //   tripdate: "2024-06-20",
+  //   passsengerOnboard: 25,
+  //   totalPassenger: 37,
+  //   disabledSeat: 3,
+  //   isOnBoard: true,
+  //   bus: 'Premium Bus',
+  //   seats: 40,
+  //   code: 'TRIP12345',
+  //   departure: "โคราช",
+  //   destination: "กรุงเทพฯ",
+  //   duration: "2 ชม. 20 นาที",
+  //   facilities: "WiFi, ปลั๊กชาร์จ, ผ้าห่ม, น้ำดื่ม, ขนม",
+  //   tripStation: [
+  //     {
+  //       id: '1',
+  //       name: 'บขส. หมอชิตใหม่ ช่องจำหน่าตั๋ว 58',
+  //       time: '07:20',
+  //       type: 'departure',
+  //       passengerOnboard: 3,
+  //       passengerOffboard: 0,
+  //     },
+  //     {
+  //       id: '2',
+  //       name: 'บขส. หมอชิตใหม่ ชานชลา 119',
+  //       time: '08:00',
+  //       type: 'stopover',
+  //       passengerOnboard: 2,
+  //       passengerOffboard: 0,
+  //     },
+  //     {
+  //       id: '3',
+  //       name: 'รังสิต หน้า ม.กรุงเทพฯ',
+  //       time: '09:40',
+  //       type: 'arrival',
+  //       passengerOnboard: 1,
+  //       passengerOffboard: 0,
+  //     },
+  //     {
+  //       id: '4',
+  //       name: 'นวนคร รพ.การุญเวช',
+  //       time: '09:40',
+  //       type: 'arrival',
+  //       passengerOnboard: 0,
+  //       passengerOffboard: 1,
+  //     },
+  //     {
+  //       id: '5',
+  //       name: 'วังน้อย (จุดปั๊มใบเวลา)',
+  //       time: '10:00',
+  //       type: 'arrival',
+  //       passengerOnboard: 0,
+  //       passengerOffboard: 0,
+  //     }
+  //   ]
+  // };
+
+  const getTrip = async () => {
+    const { data, error } = await supabase.from('trips')
+      .select('*, route_id(*)')
+      .eq('id', id)
+      .single();
+    if (error) {
+      console.log(error);
+    }
+    if (data) {
+      // console.log("data ", data);
+      const { data: busStops, error: busStopsError } = await supabase.from('bus_stops')
+        .select('*')
+        .eq('route_id', data.route_id.id)
+      if (busStopsError) {
+        throw busStopsError
       }
-    ]
-  };
+      data.bus_stops = busStops
 
+      const { data: bustype, error: bustypeError } = await supabase.from('bus_types')
+        .select('*')
+        .eq('id', data.bus_type_id)
+        .single()
+      if (bustypeError) {
+        throw bustypeError
+      }
+      data.bus_type = bustype
+      console.log("data ", data);
+      setTrip(data as any);
+    }
+  }
+
+  useEffect(() => {
+    getTrip()
+  }, [])
   return (
     <IonPage>
       <IonHeader className="ion-no-border  " >
         <IonToolbar className='ion-no-padding' color={"primary"}>
           <div className="grid grid-rows-1 ion-padding-horizontal ion-padding-top bg-primary text-white  "
-            >
+          >
             <div>
-              <IonButton fill='clear' style={{color:"#FFF"}} onClick={()=>{history.goBack()}} >
-                <FontAwesomeIcon icon={faArrowLeft}  />  &nbsp;&nbsp;
+              <IonButton fill='clear' style={{ color: "#FFF" }} onClick={() => { history.goBack() }} >
+                <FontAwesomeIcon icon={faArrowLeft} />  &nbsp;&nbsp;
                 <IonText  >Trip Details</IonText>
               </IonButton>
             </div>
@@ -91,96 +129,98 @@ const TripDetail: React.FC = () => {
         </IonToolbar>
       </IonHeader>
       <IonContent color={"light"} className="ion-no-padding min-h-screen" style={{ position: "relative" }} >
-        <div className="grid grid-rows-2   ion-padding-horizontal ion-padding-top bg-primary text-white  ion-padding-bottom  "
-          style={{ borderBottomLeftRadius: "3rem", borderBottomRightRadius: "3rem", paddingBottom: "4rem" }} >
+        {trip && <div>
+          <div className="grid grid-rows-2   ion-padding-horizontal ion-padding-top bg-primary text-white  ion-padding-bottom  "
+            style={{ borderBottomLeftRadius: "3rem", borderBottomRightRadius: "3rem", paddingBottom: "4rem" }} >
 
-          <div className='grid grid-cols-3 gap-2 text-light ion-margin-horizontal ' >
-            <div>
-              <IonLabel style={{ fontWeight: "bolder", fontSize: "1.7em" ,color:"#FFF" }} >{trip.departure}</IonLabel>
+            <div className='grid grid-cols-12 gap-2 text-light ion-margin-horizontal items-center' >
+              <div className='col-span-5 overflow-hidden'>
+                <IonLabel style={{ fontWeight: "bolder", color: "#FFF", fontSize: "1.8rem", whiteSpace: "nowrap", display: "block" }} >{trip.route_id?.origin}</IonLabel>
+              </div>
+              <div className='col-span-2 ion-text-center flex items-center justify-center ' >
+                <FontAwesomeIcon icon={faArrowRight} style={{ fontWeight: "bolder", fontSize: "1.2em", color: "#FFF" }} />
+              </div>
+              <div className='col-span-5 ion-text-right overflow-hidden'>
+                <IonLabel style={{ fontWeight: "bolder", color: "#FFF", fontSize: "1.8rem", whiteSpace: "nowrap", display: "block" }}>{trip.route_id?.destination}</IonLabel>
+              </div>
             </div>
-            <div className='ion-text-center flex items-center justify-center ' >
-              <FontAwesomeIcon icon={faArrowRight}   style={{ fontWeight: "bolder", fontSize: "1.2em" ,color:"#FFF"}} />
+            <div className='  flex justify-center items-center w-full' >
+              <div className='text-light' style={{ width: "10%", color: "white" }}><FontAwesomeIcon icon={faCarSide} /> </div>
+              <div style={{ width: "79%", borderWidth: "1px", borderColor: "#FFF" }} className='border-dashed' ></div>
             </div>
-            <div className='ion-text-right'>
-              <IonLabel style={{ fontWeight: "bolder", fontSize: "1.7em" ,color:"#FFF"  }}>{trip.destination}</IonLabel>
+            <div className='ion-margin-horizontal ion-text-right ' >
+              <IonLabel className='text-light' style={{ fontSize: "0.8em", color: "white" }} >{trip.date && moment(trip.date).format('DD MMMM , YYYY')}</IonLabel>
             </div>
           </div>
-          <div className='  flex justify-center items-center w-full' >
-            <div className='text-light' style={{ width: "10%" , color:"white"}}><FontAwesomeIcon icon={faCarSide} /> </div>
-            <div style={{ width: "79%", borderWidth: "1px", borderColor: "#FFF" }} className='border-dashed' ></div>
-          </div>
-          <div className='ion-margin-horizontal ion-text-right ' >
-            <IonLabel className='text-light' style={{ fontSize: "0.8em", color:"white" }} >{trip.tripdate && moment(trip.tripdate).format('DD MMMM , YYYY')}</IonLabel>
-          </div>
-        </div>  
-        <div style={{width:"100%",marginTop: "-2rem",  flexDirection:"column", alignItems:"center", justifyContent:"center"}} 
-         className='flex flex-column items-center justify-center '
-         >
+          <div style={{ width: "100%", marginTop: "-2rem", flexDirection: "column", alignItems: "center", justifyContent: "center" }}
+            className='flex flex-column items-center justify-center '
+          >
 
-          <BouceAnimation duration={0.1} className="card-executive bg-white grid grid-cols-3 gap-4  rounded-lg  raduis-shadow "  key={trip.id} 
-           >
-            <div className='ion-text-center'> 
-              <p style={{lineHeight:"1.5em"}} >
-                <small className='text-meduim'>ต้นทางรถอก</small>  <br/>
-                <IonLabel className='text-2xl ' color={"dark"} ><strong>{trip.time}</strong></IonLabel> <br/>
-                <IonLabel className='text-sm text-meduim' >{trip.departure}</IonLabel>
-              </p>
-            </div>
-            
-            <div className='flex  justify-center items-center' style={{flexDirection:"column"}}> 
-              <small className='text-meduim'>{trip.duration}</small>
-              <img src="/assets/svg/bus-route.svg" alt="Bus Route" style={{width:"100%",  }} />
-            </div>
-            <div className='ion-text-center'>
-              <p style={{lineHeight:"1.5em"}} >
-                <small className='text-meduim text-xs'>ปลายทาง</small>  <br/>
-                <IonLabel className='text-2xl '  color={"dark"}><strong>{trip.arrive}</strong></IonLabel> <br/>
-                <IonLabel className='text-sm text-meduim' >{trip.destination}</IonLabel>
-              </p>
-            </div> 
-          </BouceAnimation>
-          <br/><br/>
+            <BouceAnimation duration={0.1} className="card-executive bg-white grid grid-cols-3 gap-4  rounded-lg  raduis-shadow " key={trip.id}
+            >
+              <div className='ion-text-center'>
+                <p style={{ lineHeight: "1.5em" }} >
+                  <small className='text-meduim'>ต้นทางรถอก</small>  <br />
+                  <IonLabel className='text-2xl ' color={"dark"} ><strong>{trip.departure_time}</strong></IonLabel> <br />
+                  <IonLabel className='text-sm text-meduim' >{trip.route_id?.origin}</IonLabel>
+                </p>
+              </div>
 
-          <BouceAnimation duration={0.4} delay={0.2} className='card-stations bg-white grid grid-rows-3 gap-4 shadow-md  rounded-lg p-4  shadow-md ion-padding '  >
-            <div>
-              <IonText color={"primary"}>
-               <FontAwesomeIcon icon={faCarSide} className='text-md ' />
-                <IonText className='ion-margin-start' color={"dark"}>ข้อมูลรถบัส</IonText>
-              </IonText>
-            </div>
-            <div>
-              <IonText className='text-xs' color={"medium"} > {trip.bus}</IonText> <br/>
-            </div>
-            <div>
-              <IonText className='text-xs' color={"medium"} >สิ่งอำนวยความสะดวก : {trip.facilities}</IonText> <br/>
-            </div>
-          </BouceAnimation>
+              <div className='flex  justify-center items-center' style={{ flexDirection: "column" }}>
+                <small className='text-meduim'>{trip?.route_id?.duration}</small>
+                <img src="/assets/svg/bus-route.svg" alt="Bus Route" style={{ width: "100%", }} />
+              </div>
+              <div className='ion-text-center'>
+                <p style={{ lineHeight: "1.5em" }} >
+                  <small className='text-meduim text-xs'>ปลายทาง</small>  <br />
+                  <IonLabel className='text-2xl ' color={"dark"}><strong>{trip.arrival_time}</strong></IonLabel> <br />
+                  <IonLabel className='text-sm text-meduim' >{trip?.route_id?.destination}</IonLabel>
+                </p>
+              </div>
+            </BouceAnimation>
+            <br /><br />
 
-          <br/> 
-          <div style={{width:"100%"}} >
-          <BouceAnimation duration={0.4} delay={0.5}  className='ion-text-left ion-padding' style={{width:"100%"}}  >
-            <IonLabel className='text-dark text-sm text-bold ion-margin-start' >
-              จุดรับ & จุดขึ้น
-            </IonLabel> 
-          </BouceAnimation>
-          </div>
-  
-          <BouceAnimation className=" card-stations "
-          duration={0.4} delay={0.5}  >
-            <IonAccordionGroup className=' ion-margin  bg-white' value={stationacc}  >
-              {trip.tripStation.map((station) => (
-                <StationTrip key={station.id} station={station} />
-              ))} 
+            <BouceAnimation duration={0.4} delay={0.2} className='card-stations bg-white grid grid-rows-3 gap-4 shadow-md  rounded-lg p-4  shadow-md ion-padding '  >
+              <div>
+                <IonText color={"primary"}>
+                  <FontAwesomeIcon icon={faCarSide} className='text-md ' />
+                  <IonText className='ion-margin-start' color={"dark"}>ข้อมูลรถบัส</IonText>
+                </IonText>
+              </div>
+              <div>
+                <IonText className='text-xs' color={"medium"} > {trip?.bus_type?.name}</IonText> <br />
+              </div>
+              <div>
+                <IonText className='text-xs' color={"medium"} >สิ่งอำนวยความสะดวก : {trip?.bus_type?.amenities.join(", ")}</IonText> <br />
+              </div>
+            </BouceAnimation>
+
+            <br />
+            <div style={{ width: "100%" }} >
+              <BouceAnimation duration={0.4} delay={0.5} className='ion-text-left ion-padding' style={{ width: "100%" }}  >
+                <IonLabel className='text-dark text-sm text-bold ion-margin-start' >
+                  จุดรับ & จุดขึ้น
+                </IonLabel>
+              </BouceAnimation>
+            </div>
+
+            <BouceAnimation className=" card-stations "
+              duration={0.4} delay={0.5}  >
+              <IonAccordionGroup className=' ion-margin  bg-white' value={stationacc}  >
+                {trip.bus_stops?.map((station) => (
+                  <StationTrip key={station.id} station={station} />
+                ))}
               </IonAccordionGroup>
-          </BouceAnimation>  
-        </div>
-        <div className='bottom-div' >
-          <IonButton expand='block' mode='ios'   className=" text-light rounded-4xl"  style={{color:"#FFF"}}
-           onClick={()=>{history.push("/plan/"+trip?.id)}} >
-            ที่นั่งทั้งหมด
-          </IonButton>
-        </div> 
-        <div style={{height:"15rem"}} ></div>
+            </BouceAnimation>
+          </div>
+          <div className='bottom-div' >
+            <IonButton expand='block' mode='ios' className=" text-light rounded-4xl" style={{ color: "#FFF" }}
+              onClick={() => { history.push("/plan/" + trip?.id) }} >
+              ที่นั่งทั้งหมด
+            </IonButton>
+          </div>
+          <div style={{ height: "15rem" }} ></div>
+        </div>}
       </IonContent>
     </IonPage>
   );
@@ -192,37 +232,37 @@ export default TripDetail;
 const StationTrip: React.FC<{ station: any }> = ({ station }) => {
   return (
     <IonAccordion value={station.id} className='ion-no-padding' >
-    <div slot='header' className='grid grid-cols-12 gap-4 border-bottom' style={{padding:".3rem 0 .3rem .3rem" , }} >
-      <div className='flex flex-center items-center ' >
-        <div className=' rounded-full bg-tertiary-tint flex items-center justify-center  ' style={{width:"2rem", height:"2rem"}} > 
-         <IonText color={"primary"}  className='text-sm' >
-          <FontAwesomeIcon icon={faLocationDot}  />
-         </IonText>
-         
+      <div slot='header' className='grid grid-cols-12 gap-4 border-bottom' style={{ padding: ".3rem 0 .3rem .3rem", }} >
+        <div className='flex flex-center items-center ' >
+          <div className=' rounded-full bg-tertiary-tint flex items-center justify-center  ' style={{ width: "2rem", height: "2rem" }} >
+            <IonText color={"primary"} className='text-sm' >
+              <FontAwesomeIcon icon={faLocationDot} />
+            </IonText>
+
+          </div>
+        </div>
+        <div className='col-span-8 ion-padding-start'>
+          <IonLabel className='text-sm  ' color={"dark"} >{station.name}</IonLabel> <br />
+          <IonLabel className='text-xs text-meduim' >เวลา {station.time}</IonLabel>
+        </div>
+        <div className='col-span-3 ion-text-right'>
+          <IonChip color={"tertiary"} >
+            <IonLabel className='text-2xs text-dark' >
+              <FontAwesomeIcon icon={faArrowUp} className='text-dark' />
+              {station.passengerOnboard}
+            </IonLabel>&nbsp;
+            <IonLabel className='text-2xs text-dark' >
+              <FontAwesomeIcon icon={faArrowDown} className='text-dark' />
+              {station.passengerOffboard}  </IonLabel>
+          </IonChip>
         </div>
       </div>
-      <div className='col-span-8 ion-padding-start'>
-         <IonLabel className='text-sm  ' color={"dark"} >{station.name}</IonLabel> <br/>
-         <IonLabel className='text-xs text-meduim' >เวลา {station.time}</IonLabel>
+      <div slot='content' className='ion-padding' >
+        <IonText className='text-sm text-meduim' color={"dark"} >
+          <FontAwesomeIcon icon={faArrowUp} />   ผู้โดยสารที่ขึ้นสถานี นี้ : {station.passengerOnboard} คน <br />
+          <FontAwesomeIcon icon={faArrowDown} />   ผู้โดยสารที่ลงสถานี นี้ : {station.passengerOffboard} คน <br />
+        </IonText>
       </div>
-      <div className='col-span-3 ion-text-right'>
-        <IonChip color={"tertiary"} >
-          <IonLabel className='text-2xs text-dark' >
-             <FontAwesomeIcon icon={faArrowUp} className='text-dark' />  
-             {station.passengerOnboard}  
-            </IonLabel>&nbsp;
-           <IonLabel className='text-2xs text-dark' >
-             <FontAwesomeIcon icon={faArrowDown} className='text-dark' />  
-             {station.passengerOffboard}  </IonLabel>
-        </IonChip> 
-      </div>
-    </div>
-    <div slot='content' className='ion-padding' >
-      <IonText className='text-sm text-meduim' color={"dark"} >
-       <FontAwesomeIcon icon={faArrowUp} />   ผู้โดยสารที่ขึ้นสถานี นี้ : {station.passengerOnboard} คน <br/>
-        <FontAwesomeIcon icon={faArrowDown} />   ผู้โดยสารที่ลงสถานี นี้ : {station.passengerOffboard} คน <br/>
-      </IonText>
-    </div>
     </IonAccordion>
   );
 }

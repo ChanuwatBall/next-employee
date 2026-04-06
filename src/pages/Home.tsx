@@ -1,5 +1,5 @@
 import { IonButton, IonChip, IonContent, IonHeader, IonLabel, IonList, IonPage, IonSearchbar, IonText, IonToolbar } from '@ionic/react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faQrcode } from '@fortawesome/free-solid-svg-icons'
 import { faClock } from '@fortawesome/free-regular-svg-icons'
@@ -9,6 +9,7 @@ import './css/Home.css';
 import moment from 'moment';
 import 'moment/locale/th'; // import Thai locale for moment
 import { BouceAnimation } from '../components/Animations';
+import { supabase } from '../supabase/supabase';
 moment.locale('th'); // set Thai locale for date formatting
 
 const mockTrips = [
@@ -18,10 +19,11 @@ const mockTrips = [
   { id: '4', title: 'กทม. - โคราช', time: '15:30', arrive: '23:00', tripdate: "2024-06-21", passsengerOnboard: 35, totalPassenger: 40, disabledSeat: 0, isOnBoard: false },
 ];
 
+import { Trip } from '../types/trip';
 const Home: React.FC = () => {
   const history = useHistory();
   const [query, setQuery] = useState('');
-  const [trips, setTrips] = useState(mockTrips);
+  const [trips, setTrips] = useState<Trip[]>([]);
   const [role, setRole] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -29,11 +31,28 @@ const Home: React.FC = () => {
   const startRef = useRef<number | null>(null);
   const intervalRef = useRef<number | null>(null);
 
+  const getDriverTrips = async () => {
+    const { data, error } = await supabase.from('trips')
+      .select('*, route_id(*)')
+      .gte('date', moment().utc().startOf("day"))
+
+    if (error) {
+      console.log(error);
+    }
+    if (data) {
+      console.log("data ", data);
+      setTrips(data);
+    }
+  }
+
   useEffect(() => {
+    getDriverTrips();
     const r = localStorage.getItem('role');
     setRole(r);
     const saved = localStorage.getItem('driver_elapsed');
     if (saved) setElapsed(Number(saved) || 0);
+
+
   }, []);
 
   useEffect(() => {
@@ -80,7 +99,7 @@ const Home: React.FC = () => {
       // resuming handled by effect
     }
   };
- 
+
   const hellotime = (() => {
     const hour = moment().hour();
     if (hour < 12) return 'ตอนเช้า';
@@ -89,21 +108,35 @@ const Home: React.FC = () => {
     return 'ตอนดึก';
   })();
 
-  const searchMockupTrip = (q: string) => {
-    const v = (q || '').trim().toLowerCase();
-    setQuery(q);
+  // const searchMockupTrip = (q: string) => {
+  //   const v = (q || '').trim().toLowerCase();
+  //   setQuery(q);
+  //   if (!v) {
+  //     setTrips(mockTrips);
+  //     return;
+  //   }
+  //   const filtered = mockTrips.filter(t => {
+  //     const title = t.title?.toLowerCase() || '';
+  //     const time = t.time || '';
+  //     const date = t.tripdate ? moment(t.tripdate).format('DD MMMM YYYY').toLowerCase() : '';
+  //     return title.includes(v) || time.includes(v) || date.includes(v);
+  //   });
+  //   setTrips(filtered);
+  // };
+
+  const tripsFilter = useCallback((trips: Trip[]) => {
+    const v = (query || '').trim().toLowerCase();
     if (!v) {
-      setTrips(mockTrips);
-      return;
+      return trips;
     }
-    const filtered = mockTrips.filter(t => {
-      const title = t.title?.toLowerCase() || '';
-      const time = t.time || '';
-      const date = t.tripdate ? moment(t.tripdate).format('DD MMMM YYYY').toLowerCase() : '';
+    return trips.filter(t => {
+      const title = t.route_id?.id.toLowerCase() || '';
+      const time = t.departure_time || '';
+      const date = t.date ? moment(t.date).format('DD MMMM YYYY').toLowerCase() : '';
       return title.includes(v) || time.includes(v) || date.includes(v);
     });
-    setTrips(filtered);
-  };
+  }, [query])
+
 
   return (
     <IonPage>
@@ -118,7 +151,7 @@ const Home: React.FC = () => {
                 </h2>
               </IonText>
               <IonText color={"light"} >
-                <div className="text-sm text-gray-500" style={{color:"#FFF"}}> {moment().format('DD MMMM ,YYYY')} </div>
+                <div className="text-sm text-gray-500" style={{ color: "#FFF" }}> {moment().format('DD MMMM ,YYYY')} </div>
               </IonText>
             </div>
             <div className="p-2 bg-gray-100 rounded-full text-white shadow flex items-center justify-center  "
@@ -134,36 +167,37 @@ const Home: React.FC = () => {
       </IonHeader>
       <IonContent className="ion-padding bg-white min-h-screen"  >
         <div style={{ width: "100%", height: "100vh", overflowY: "scroll", paddingBottom: "20vh" }} >
-          <br/>
-          <IonSearchbar 
+          <br />
+          <IonSearchbar
             mode='ios'
             placeholder="ค้นหาเที่ยวรถ..."
             className='ion-no-padding search-trip'
             value={query}
-            onIonInput={(e: any) => searchMockupTrip(e.detail?.value ?? '')}
+          // onIonInput={(e: any) => searchMockupTrip(e.detail?.value ?? '')}
           />
           <br />
           {/* <IonList color='transparent'> */}
-            <IonToolbar color={"transparent"}>
-              <IonText className="text-lg font-semibold" slot='start' color={"dark"} >
-                <strong>เที่ยวรถ</strong>
-              </IonText>
-              <IonText className="text-sm  " color={"primary"} slot='end'>ทั้งหมด </IonText>
-            </IonToolbar>
-            {trips.map((trip , index) => (
-            <BouceAnimation duration={(index+2)/10} className="card-executive"  key={trip.id}> 
-              <CardTrip 
-                title={trip.title} time={trip.time}
-                arrive={trip.arrive}
-                disabledSeat={trip.disabledSeat}
-                tripdate={trip.tripdate}
-                passengerOnboard={trip.passsengerOnboard}
-                totalPassenger={trip.totalPassenger}
-                isOnBoard={trip.isOnBoard}
+          <IonToolbar color={"transparent"}>
+            <IonText className="text-lg font-semibold" slot='start' color={"dark"} >
+              <strong>เที่ยวรถ</strong>
+            </IonText>
+            <IonText className="text-sm  " color={"primary"} slot='end'>ทั้งหมด </IonText>
+          </IonToolbar>
+          {trips.map((trip, index) => (
+            <BouceAnimation duration={(index + 2) / 10} className="card-executive" key={trip.id}>
+              <CardTrip
+                title={`${trip.route_id?.origin} - ${trip.route_id?.destination}`}
+                time={trip.departure_time}
+                arrive={trip.arrival_time}
+                disabledSeat={trip.total_seats - trip.available_seats}
+                tripdate={trip.date}
+                passengerOnboard={trip.total_seats - trip.available_seats}
+                totalPassenger={trip.total_seats}
+                isOnBoard={moment(`${trip.date} ${trip?.arrival_time}`).isAfter(moment())}
                 select={() => history.push(`/trip/${trip.id}`)}
               />
             </BouceAnimation>
-            ))}
+          ))}
           {/* </IonList> */}
         </div>
       </IonContent>
