@@ -1,179 +1,322 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useCallback, useEffect } from "react";
+import { useParams, useHistory } from "react-router-dom";
+import {
+  IonPage,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonContent,
+  IonButtons,
+  IonBackButton,
+  IonButton,
+  IonLabel,
+  IonIcon,
+  IonText,
+} from "@ionic/react";
+import { CircleDot, DoorOpen, Toilet, TriangleAlert, MoveDown, User } from "lucide-react";
+import { supabase } from "../supabase/supabase";
+import { Trip } from "../types/trip";
+import moment from "moment";
+import "./css/PlanChair.css";
 
-type SeatStatus = "available" | "occupied" | "reserved" | "disabled";
+// --- Types ---
+type SeatStatus = "available" | "booked" | "unavailable" | "selected";
 
-type GridItem =
-  | { kind: "seat"; id: string; label: string; status: SeatStatus; r: number; c: number; cs?: number }
-  | { kind: "driver"; label: string; r: number; c: number; cs?: number }
-  | { kind: "stairs"; label: string; r: number; c: number; cs?: number }
-  | { kind: "aisle"; r: number; c: number; rs?: number; cs?: number };
-
-type Props = {
-  seatStatusMap?: Record<string, SeatStatus>;
-  onSeatClick?: (seatId: string) => void;
-};
-
-// 5 คอลัมน์: 0,1 ซ้าย | 2 ทางเดิน | 3,4 ขวา
-const COLS = 5;
-
-const statusColor: Record<SeatStatus, string> = {
-  available: "#2ecc71",
-  occupied: "#2c3e50",
-  reserved: "#f1c40f",
-  disabled: "#bdc3c7",
-};
-
-function buildPlan(seatStatusMap?: Record<string, SeatStatus>) {
-  const seat = (id: string, r: number, c: number): GridItem => ({
-    kind: "seat",
-    id,
-    label: id,
-    status: seatStatusMap?.[id] ?? "available",
-    r,
-    c,
-  });
-
-  const items: GridItem[] = [];
-
-  items.push({ kind: "stairs", label: "บันไดขึ้น", r: 0, c: 3, cs: 2 });
-
-  // row 0: คนขับ (ตัวอย่างให้กิน 2 คอลัมน์ฝั่งซ้าย)
-  items.push({ kind: "driver", label: "คนขับ", r: 0, c: 0, cs: 2 });
-
-  // // row 1: บันไดขึ้น กิน 2 คอลัมน์ (ซ้าย)
-  // items.push({ kind: "stairs", label: "บันไดขึ้น", r: 1, c: 0, cs: 2 });
-
-  // ทางเดิน (คอลัมน์ 2) ให้ยาวลงมาตลอด
-  items.push({ kind: "aisle", r: 0, c: 2, rs: 9, cs: 1 }); // rs = จำนวนแถวรวม (ปรับได้)
-
-  // แถวที่นั่งเริ่มที่ row 2
-  const rows = [
-    ["1A", "1B", "1C", "1D"],
-    ["2A", "2B", "2C", "2D"],
-    ["3A", "3B", "3C", "3D"],
-    ["4A", "4B", "4C", "4D"],
-    ["5A", "5B", "5C", "5D"],
-    ["6A", "6B", "6C", "6D"],
-    ["7A", "7B", "7C", "7D"],
-  ];
-
-  rows.forEach((rSeats, idx) => {
-    const r = 2 + idx;
-    items.push(seat(rSeats[0], r, 0));
-    items.push(seat(rSeats[1], r, 1));
-    items.push(seat(rSeats[2], r, 3));
-    items.push(seat(rSeats[3], r, 4));
-  });
-
-  const totalRows = 2 + rows.length; // 9 แถว
-  return { items, totalRows };
+interface Seat {
+  id: string;
+  number: string;
+  row: number;
+  col: number;
+  status: SeatStatus;
+  floor: number;
+  price?: number;
 }
 
-export default function UpperDeckPlanWith2ColStairs({ seatStatusMap, onSeatClick }: Props) {
-  const { items, totalRows } = useMemo(() => buildPlan(seatStatusMap), [seatStatusMap]);
-
-  return (
-    <div style={styles.wrapper}>
-      <div style={styles.title}>แปลนที่นั่งชั้นบน</div>
-
-      <div
-        style={{
-          ...styles.grid,
-          gridTemplateColumns: `repeat(${COLS}, 1fr)`,
-          gridTemplateRows: `repeat(${totalRows}, 56px)`,
-        }}
-      >
-        {items.map((it, i) => {
-          const base: React.CSSProperties = {
-            gridColumn: `${it.c + 1} / span ${it.cs ?? 1}`,
-            gridRow: `${it.r + 1} / span ${"rs" in it && it.rs ? it.rs : 1}`,
-          };
-
-          if (it.kind === "aisle") {
-            return <div key={i} style={{ ...styles.aisle, ...base }} />;
-          }
-
-          if (it.kind === "driver") {
-            return (
-              <div key={i} style={{ ...styles.block, ...styles.driver, ...base }}>
-                🚍 {it.label}
-              </div>
-            );
-          }
-
-          if (it.kind === "stairs") {
-            return (
-              <div key={i} style={{ ...styles.block, ...styles.stairs, ...base }}>
-                ⬆️ {it.label}
-              </div>
-            );
-          }
-
-          // seat
-          const disabled = it.status === "disabled";
-          const border = disabled ? "1px solid #e5e7eb" : "1px solid #d1d5db";
-          const bg = it.status === "available" ? "#ecfdf5" : "#f3f4f6";
-
-          return (
-            <button
-              key={i}
-              type="button"
-              disabled={disabled}
-              onClick={() => onSeatClick?.(it.id)}
-              style={{
-                ...styles.seat,
-                ...base,
-                border,
-                background: bg,
-                opacity: disabled ? 0.6 : 1,
-              }}
-            >
-              <div style={{ fontSize: 18, color: statusColor[it.status] }}>🪑</div>
-              <div style={{ fontSize: 12, fontWeight: 700 }}>{it.label}</div>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
+interface BusLayout {
+  id: string;
+  name: string;
+  rows: (string | null)[][];
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  wrapper: { maxWidth: 420, margin: "0 auto", padding: 16, fontFamily: "Inter, Arial" },
-  title: { fontSize: 18, fontWeight: 800, marginBottom: 12 },
-  grid: {
-    display: "grid",
-    gap: 10,
-    padding: 14,
-    border: "1px solid #e5e7eb",
-    borderRadius: 14,
-    background: "#fff",
-  },
-  aisle: {
-    borderRadius: 12,
-    background: "#f9fafb",
-    border: "1px dashed #e5e7eb",
-  },
-  block: {
-    borderRadius: 12,
-    border: "1px solid #e5e7eb",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontWeight: 800,
-    fontSize: 13,
-    background: "#fff",
-  },
-  driver: { background: "#eef2ff", borderColor: "#c7d2fe" },
-  stairs: { background: "#f0fdf4", borderColor: "#bbf7d0" },
-  seat: {
-    borderRadius: 12,
-    cursor: "pointer",
-    padding: 8,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    flexDirection: "column",
-  },
+const SPECIAL_CELLS = ['DRIVER', 'DOOR1', 'DOOR2', 'TOILET', 'EMERGENCY', 'STAIRS'];
+
+const statusClasses: Record<SeatStatus, string> = {
+  available: "seat-available",
+  booked: "seat-booked",
+  unavailable: "seat-unavailable",
+  selected: "seat-selected",
 };
+
+const specialCellLabels: Record<string, string> = {
+  DRIVER: "พขร.",
+  DOOR1: "ประตู 1",
+  DOOR2: "ประตู 2",
+  TOILET: "ห้องน้ำ",
+  EMERGENCY: "ทางออกฉุกเฉิน",
+  STAIRS: "บันได",
+};
+
+// --- Layouts ---
+export const layout7m: BusLayout = {
+  id: '7m',
+  name: 'รถตู้ 7.3 เมตร',
+  rows: [
+    ['DOOR1', null, null, 'DRIVER'],
+    ['1A', '1B', null, null],
+    ['2A', '2B', null, null],
+    ['3A', '3B', null, '3D'],
+    ['4A', '4B', null, '4D'],
+    ['5A', '5B', null, '5D'],
+    ['6A', '6B', null, '6D'],
+    ['7A', '7B', '7C', '7D'],
+  ],
+};
+
+export const layout12m: BusLayout = {
+  id: '12m',
+  name: 'รถบัส 12 เมตร',
+  rows: [
+    ['DOOR1', null, null, 'DRIVER'],
+    ['1A', '1B', '1C', '1D'],
+    ['2A', '2B', '2C', '2D'],
+    ['3A', '3B', '3C', '3D'],
+    ['4A', '4B', '4C', '4D'],
+    ['TOILET', null, '5C', '5D'],
+    ['DOOR2', null, '6C', '6D'],
+    ['5A', '5B', '7C', '7D'],
+    ['6A', '6B', null, 'EMERGENCY'],
+    ['7A', '7B', '8C', '8D'],
+    ['8A', '8B', '9C', '9D'],
+  ],
+};
+
+// --- Helpers ---
+export function getBusLayout(busType: string, totalSeats: number): BusLayout {
+  if (totalSeats <= 24 || busType.includes('VIP 24') || busType.includes('First Class')) {
+    return layout7m;
+  }
+  return layout12m;
+}
+
+export function isSpecialCell(label: string | null): boolean {
+  return label !== null && SPECIAL_CELLS.includes(label);
+}
+
+export const generateSeats = (layout: BusLayout): Seat[] => {
+  const seats: Seat[] = [];
+  layout.rows.forEach((row, rowIdx) => {
+    row.forEach((cell, colIdx) => {
+      if (cell === null || isSpecialCell(cell)) return;
+      seats.push({
+        id: `s-${cell}`,
+        number: cell,
+        row: rowIdx,
+        col: colIdx,
+        status: "available",
+        floor: 1,
+      });
+    });
+  });
+  return seats;
+};
+
+// --- Main Page ---
+const PlanChair: React.FC = () => {
+    const { id } = useParams<{ id: string }>();
+    const history = useHistory();
+    const [trip, setTrip] = useState<Trip | null>(null);
+    const [seats, setSeats] = useState<Seat[]>([]);
+
+    const layout = useMemo(() => {
+        if (!trip) return layout12m;
+        const busTypeName = trip.bus_type?.name || '';
+        return getBusLayout(busTypeName, trip.total_seats || 40);
+    }, [trip]);
+
+    const initialSeats = useMemo(() => generateSeats(layout), [layout]);
+
+    const fetchTripAndSeats = async () => {
+        // 1. Fetch Trip
+        const { data: tripData, error: tripError } = await supabase
+            .from("trips")
+            .select("*, route_id(*), bus_type:bus_type_id(*)")
+            .eq("id", id)
+            .single();
+
+        if (tripError) {
+            console.error("Error fetching trip:", tripError);
+            return;
+        }
+        setTrip(tripData as any);
+
+        // 2. Fetch occupied seats
+        const { data: seatData, error: seatError } = await supabase
+            .from("seats")
+            .select("*")
+            .eq("trip_id", id);
+
+        if (seatError) {
+            console.error("Error fetching seats:", seatError);
+            return;
+        }
+
+        const mergedSeats = initialSeats.map(s => {
+            const dbSeat = seatData?.find(ds => ds.seat_number.trim().toUpperCase() === s.number.trim().toUpperCase());
+            if (dbSeat) {
+                return {
+                    ...s,
+                    id: dbSeat.id,
+                    status: (dbSeat.is_available ? "available" : "booked") as SeatStatus,
+                    price: dbSeat.price
+                };
+            }
+            return s;
+        });
+        setSeats(mergedSeats);
+    }
+
+    useEffect(() => {
+        fetchTripAndSeats();
+    }, [id, initialSeats]);
+
+    const toggleSeat = useCallback((seatId: string) => {
+        setSeats((prev) =>
+            prev.map((s) => {
+                if (s.id !== seatId) return s;
+                if (s.status === "booked" || s.status === "unavailable") return s;
+                if (s.status === "selected") return { ...s, status: "available" };
+                return { ...s, status: "selected" };
+            })
+        );
+    }, []);
+
+    const handleContinue = () => {
+        // Since this is for employee view, we just go back
+        history.goBack();
+    }
+
+    return (
+        <IonPage>
+            <IonHeader className="ion-no-border">
+                <IonToolbar color="primary">
+                    <IonButtons slot="start">
+                        <IonBackButton defaultHref={`/trip/${id}`} text="" />
+                    </IonButtons>
+                    <IonTitle style={{ color: "#FFF" }}>แผงที่นั่ง</IonTitle>
+                </IonToolbar>
+            </IonHeader>
+
+            <IonContent className="bg-slate-50">
+                <div className="planchair-container p-4 flex flex-col items-center">
+                    {/* Header Info */}
+                    {trip && (
+                        <div className="planchair-header w-full mb-6 text-center">
+                            <h2 className="text-xl font-black text-slate-800">
+                                {trip.route_id?.origin} → {trip.route_id?.destination}
+                            </h2>
+                            <p className="text-slate-500 text-sm">
+                                {moment(trip.date).format('DD MMM YYYY')} | {trip.departure_time} - {trip.arrival_time}
+                            </p>
+                            <div className="bus-type-badge mt-2 inline-block px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-semibold">
+                                {layout.name}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Legend */}
+                    <div className="planchair-legend w-full max-w-md">
+                        <div className="legend-item">
+                            <div className="legend-box available" /> 
+                            <span>ว่าง</span>
+                        </div>
+                        <div className="legend-item">
+                            <div className="legend-box selected" /> 
+                            <span>เลือก</span>
+                        </div>
+                        <div className="legend-item">
+                            <div className="legend-box booked" /> 
+                            <span>จองแล้ว</span>
+                        </div>
+                    </div>
+
+                    {/* Bus Layout Grid */}
+                    <div className="bus-grid-card w-full max-w-sm mb-8">
+                        {/* Bus Windshield effect */}
+                        <div className="bus-windshield"></div>
+                        
+                        <div className="space-y-4">
+                            {layout.rows.map((row, rowIdx) => (
+                                <div key={rowIdx} className="bus-row">
+                                    {row.map((cell, colIdx) => {
+                                        const isAisle = colIdx === 1 && (layout.id === '12m' || layout.id === '7m');
+                                        const aisleClass = isAisle ? "aisle-margin" : "";
+
+                                        if (cell === null) {
+                                            return <div key={colIdx} className={`seat-null ${aisleClass}`} />;
+                                        }
+
+                                        if (isSpecialCell(cell)) {
+                                            return (
+                                                <div key={colIdx} className={`special-cell ${aisleClass}`}>
+                                                    {cell === 'DRIVER' && <CircleDot className="driver-icon" />}
+                                                    {cell === 'TOILET' && <Toilet className="lucide-icon" />}
+                                                    {cell.startsWith('DOOR') && <DoorOpen className="lucide-icon" />}
+                                                    {cell === 'STAIRS' && <MoveDown className="lucide-icon" />}
+                                                    {cell === 'EMERGENCY' && <TriangleAlert className="lucide-icon emergency-icon" />}
+                                                    <span className="special-cell-label">{specialCellLabels[cell] || cell}</span>
+                                                </div>
+                                            );
+                                        }
+
+                                        const seat = seats.find(s => s.number === cell);
+                                        if (!seat) return <div key={colIdx} className={`w-12 h-12 ${aisleClass}`} />;
+
+                                        return (
+                                            <button
+                                                key={seat.number}
+                                                onClick={() => {
+                                                    if (seat.status === 'booked') {
+                                                        // Example: Show info or alert
+                                                        console.log("Booked seat clicked:", seat.number);
+                                                    } else {
+                                                        toggleSeat(seat.id);
+                                                    }
+                                                }}
+                                                disabled={seat.status === "unavailable"}
+                                                className={`seat-button ${statusClasses[seat.status]} ${aisleClass}`}
+                                            >
+                                                {seat.status === "booked" ? (
+                                                    <div className="flex flex-col items-center">
+                                                        <User className="w-4 h-4 mb-0.5" />
+                                                        <span className="text-[7px] leading-none">{seat.number}</span>
+                                                    </div>
+                                                ) : (
+                                                    seat.number
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            ))}
+                        </div>
+                        
+                        {/* Bus Rear bumper effect */}
+                        <div className="bus-bumper"></div>
+                    </div>
+
+                    <IonButton 
+                        expand="block" 
+                        className="w-full max-w-sm" 
+                        mode="ios" 
+                        color="primary"
+                        onClick={handleContinue}
+                    >
+                        ย้อนกลับ
+                    </IonButton>
+                </div>
+            </IonContent>
+        </IonPage>
+    );
+};
+
+export default PlanChair;

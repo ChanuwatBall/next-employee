@@ -1,0 +1,225 @@
+.planchair-container {
+    max-width: 400px;
+    margin: 0 auto;
+    padding-bottom: 40px;
+}
+
+.planchair-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.planchair-header h2 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin-bottom: 4px;
+}
+
+.planchair-header p {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+.bus-type-badge {
+    margin-top: 8px;
+    display: inline-block;
+    padding: 2px 12px;
+    background: rgba(var(--ion-color-primary-rgb), 0.1);
+    color: var(--ion-color-primary);
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.planchair-legend {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 24px;
+    background: white;
+    padding: 12px;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    color: #475569;
+}
+
+.legend-box {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+}
+
+.legend-box.available {
+    background: white;
+    border: 2px solid rgba(var(--ion-color-primary-rgb), 0.2);
+}
+
+.legend-box.selected {
+    background: var(--ion-color-primary);
+}
+
+.legend-box.booked {
+    background: #d1d5db;
+}
+
+/* Bus Frame */
+.bus-grid-card {
+    background: white;
+    border-radius: 2.5rem;
+    padding: 32px;
+    border: 4px solid #f1f5f9;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+    position: relative;
+    width: 100%;
+}
+
+.bus-windshield {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 192px;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 0 0 9999px 9999px;
+}
+
+.bus-bumper {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 192px;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 9999px 9999px 0 0;
+}
+
+.bus-row {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.bus-row:last-child {
+    margin-bottom: 0;
+}
+
+.aisle-margin {
+    margin-right: 40px;
+}
+
+/* Seat Styles */
+.seat-button {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 900;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: none;
+    padding: 0;
+}
+
+.seat-button:active {
+    transform: scale(0.95);
+}
+
+.seat-available {
+    background: #ffffff;
+    border: 2px solid rgba(var(--ion-color-primary-rgb), 0.2);
+    color: #0f172a;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.seat-available:hover {
+    background: rgba(var(--ion-color-primary-rgb), 0.05);
+}
+
+.seat-selected {
+    background: var(--ion-color-primary);
+    color: #ffffff;
+    border-color: var(--ion-color-primary);
+    box-shadow: 0 4px 6px -1px rgba(var(--ion-color-primary-rgb), 0.4);
+    z-index: 10;
+    transform: scale(1.05);
+}
+
+.seat-booked {
+    background: #e2e8f0;
+    color: #475569;
+    cursor: pointer;
+    border-color: #cbd5e1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.seat-unavailable {
+    background: #f3f4f6;
+    color: #d1d5db;
+    cursor: not-allowed;
+    opacity: 0.4;
+    border: 1px dashed #e5e7eb;
+}
+
+/* Special Cells */
+.special-cell {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+}
+
+.special-cell-label {
+    font-size: 7px;
+    font-weight: 800;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: -0.025em;
+}
+
+.special-cell .lucide-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.special-cell .driver-icon {
+    color: #475569;
+    width: 20px;
+    height: 20px;
+}
+
+.special-cell .emergency-icon {
+    color: #f59e0b;
+}
+
+.seat-null {
+    width: 48px;
+    height: 48px;
+    background: transparent;
+    border: none;
+    pointer-events: none;
+}

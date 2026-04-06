@@ -35,12 +35,28 @@ const Home: React.FC = () => {
     const { data, error } = await supabase.from('trips')
       .select('*, route_id(*)')
       .gte('date', moment().utc().startOf("day"))
-
     if (error) {
       console.log(error);
     }
     if (data) {
+      let tripid = data.map((trip: Trip) => trip.id)
+      const { data: seatData, error: seatError } = await supabase.from('seats')
+        .select('*')
+        .in('trip_id', tripid)
+
       console.log("data ", data);
+      for (const trip of data) {
+        if (seatData) {
+          let seats = seatData.filter((seat: any) => seat.trip_id === trip.id)
+          trip.seatBooked = seats.length;
+        } else {
+          trip.seatBooked = 0;
+        }
+        if (seatError) {
+          console.log(seatError);
+        }
+      }
+
       setTrips(data);
     }
   }
@@ -51,8 +67,7 @@ const Home: React.FC = () => {
     setRole(r);
     const saved = localStorage.getItem('driver_elapsed');
     if (saved) setElapsed(Number(saved) || 0);
-
-
+    console.log("trips ", trips);
   }, []);
 
   useEffect(() => {

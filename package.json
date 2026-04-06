@@ -34,6 +34,7 @@
     "framer-motion": "^12.34.3",
     "html5-qrcode": "^2.3.8",
     "ionicons": "^7.4.0",
+    "lucide-react": "^1.7.0",
     "moment": "^2.30.1",
     "moment-timezone": "^0.6.1",
     "motion": "^12.34.3",
