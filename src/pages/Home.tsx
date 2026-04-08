@@ -6,8 +6,7 @@ import { faClock } from '@fortawesome/free-regular-svg-icons'
 import { useHistory } from 'react-router-dom';
 
 import './css/Home.css';
-import moment from 'moment';
-import 'moment/locale/th'; // import Thai locale for moment
+import moment from 'moment'; 
 import { BouceAnimation } from '../components/Animations';
 import { supabase } from '../supabase/supabase';
 moment.locale('th'); // set Thai locale for date formatting
@@ -246,7 +245,7 @@ const CardTrip: React.FC<CardTripProps> = ({ title, time, arrive, disabledSeat, 
           <IonLabel style={{ fontSize: "medium" }}>
             <FontAwesomeIcon icon={faClock} /> &nbsp;
             <IonText>{time} - {arrive}</IonText>
-            <p className="text-xs text-gray-400 mt-1"  >
+            <p className="text-xs text-gray-400 mt-4" style={{marginTop:".5rem"}} >
               {tripdate && moment(tripdate).format('DD MMMM YYYY')}
             </p>
           </IonLabel>

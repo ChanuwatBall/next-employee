@@ -1,19 +1,23 @@
 import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { useParams, useHistory } from "react-router-dom";
 import {
-  IonPage,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonContent,
-  IonButtons,
-  IonBackButton,
-  IonButton,
-  IonLabel,
-  IonIcon,
-  IonText,
+    IonPage,
+    IonHeader,
+    IonToolbar,
+    IonTitle,
+    IonContent,
+    IonButtons,
+    IonBackButton,
+    IonButton,
+    IonLabel,
+    IonIcon,
+    IonText,
+    IonModal,
+    IonCol,
+    IonRow,
+    IonFooter,
 } from "@ionic/react";
-import { CircleDot, DoorOpen, Toilet, TriangleAlert, MoveDown, User } from "lucide-react";
+import { CircleDot, DoorOpen, Toilet, TriangleAlert, MoveDown, User, Armchair, X } from "lucide-react";
 import { supabase } from "../supabase/supabase";
 import { Trip } from "../types/trip";
 import moment from "moment";
@@ -23,101 +27,128 @@ import "./css/PlanChair.css";
 type SeatStatus = "available" | "booked" | "unavailable" | "selected";
 
 interface Seat {
-  id: string;
-  number: string;
-  row: number;
-  col: number;
-  status: SeatStatus;
-  floor: number;
-  price?: number;
+    id: string;
+    number: string;
+    row: number;
+    col: number;
+    status: SeatStatus;
+    floor: number;
+    price?: number;
 }
 
 interface BusLayout {
-  id: string;
-  name: string;
-  rows: (string | null)[][];
+    id: string;
+    name: string;
+    rows: (string | null)[][];
+}
+
+interface TicketDetail {
+    id: string;
+    price: number;
+    status: string;
+    qr_code: string;
+    booking_id: string | null;
+    created_at: string;
+    seat_number: string;
+    checked_in_at: string | null;
+    ticket_number: string;
+    passenger_name: string;
+    passenger_type: string;
+    passenger_phone: string;
+    passenger_id_card: string;
+}
+
+interface SeatDetail {
+    id: string;
+    trip_id: string;
+    seat_number: string;
+    seat_type: string;
+    price: number;
+    is_available: boolean;
+    created_at: string;
+    ticket_id: TicketDetail | null;
 }
 
 const SPECIAL_CELLS = ['DRIVER', 'DOOR1', 'DOOR2', 'TOILET', 'EMERGENCY', 'STAIRS'];
 
 const statusClasses: Record<SeatStatus, string> = {
-  available: "seat-available",
-  booked: "seat-booked",
-  unavailable: "seat-unavailable",
-  selected: "seat-selected",
+    available: "seat-available",
+    booked: "seat-booked",
+    unavailable: "seat-unavailable",
+    selected: "seat-selected",
 };
 
 const specialCellLabels: Record<string, string> = {
-  DRIVER: "พขร.",
-  DOOR1: "ประตู 1",
-  DOOR2: "ประตู 2",
-  TOILET: "ห้องน้ำ",
-  EMERGENCY: "ทางออกฉุกเฉิน",
-  STAIRS: "บันได",
+    DRIVER: "พขร.",
+    DOOR1: "ประตู 1",
+    DOOR2: "ประตู 2",
+    TOILET: "ห้องน้ำ",
+    EMERGENCY: "ทางออกฉุกเฉิน",
+    STAIRS: "บันได",
 };
 
 // --- Layouts ---
 export const layout7m: BusLayout = {
-  id: '7m',
-  name: 'รถตู้ 7.3 เมตร',
-  rows: [
-    ['DOOR1', null, null, 'DRIVER'],
-    ['1A', '1B', null, null],
-    ['2A', '2B', null, null],
-    ['3A', '3B', null, '3D'],
-    ['4A', '4B', null, '4D'],
-    ['5A', '5B', null, '5D'],
-    ['6A', '6B', null, '6D'],
-    ['7A', '7B', '7C', '7D'],
-  ],
+    id: '7m',
+    name: 'รถตู้ 7.3 เมตร',
+    rows: [
+        ['DOOR1', null, null, 'DRIVER'],
+        ['1A', '1B', null, null],
+        ['2A', '2B', null, null],
+        ['3A', '3B', null, '3D'],
+        ['4A', '4B', null, '4D'],
+        ['5A', '5B', null, '5D'],
+        ['6A', '6B', null, '6D'],
+        ['7A', '7B', '7C', '7D'],
+    ],
 };
 
 export const layout12m: BusLayout = {
-  id: '12m',
-  name: 'รถบัส 12 เมตร',
-  rows: [
-    ['DOOR1', null, null, 'DRIVER'],
-    ['1A', '1B', '1C', '1D'],
-    ['2A', '2B', '2C', '2D'],
-    ['3A', '3B', '3C', '3D'],
-    ['4A', '4B', '4C', '4D'],
-    ['TOILET', null, '5C', '5D'],
-    ['DOOR2', null, '6C', '6D'],
-    ['5A', '5B', '7C', '7D'],
-    ['6A', '6B', null, 'EMERGENCY'],
-    ['7A', '7B', '8C', '8D'],
-    ['8A', '8B', '9C', '9D'],
-  ],
+    id: '12m',
+    name: 'รถบัส 12 เมตร',
+    rows: [
+        ['DOOR1', null, null, 'DRIVER'],
+        ['1A', '1B', '1C', '1D'],
+        ['2A', '2B', '2C', '2D'],
+        ['3A', '3B', '3C', '3D'],
+        ['4A', '4B', '4C', '4D'],
+        ['TOILET', null, '5C', '5D'],
+        ['DOOR2', null, '6C', '6D'],
+        ['5A', '5B', '7C', '7D'],
+        ['6A', '6B', null, 'EMERGENCY'],
+        ['7A', '7B', '8C', '8D'],
+        ['8A', '8B', '9C', '9D'],
+    ],
 };
 
 // --- Helpers ---
 export function getBusLayout(busType: string, totalSeats: number): BusLayout {
-  if (totalSeats <= 24 || busType.includes('VIP 24') || busType.includes('First Class')) {
-    return layout7m;
-  }
-  return layout12m;
+    if (totalSeats <= 24 || busType.includes('VIP 24') || busType.includes('First Class')) {
+        return layout7m;
+    }
+    return layout12m;
 }
 
 export function isSpecialCell(label: string | null): boolean {
-  return label !== null && SPECIAL_CELLS.includes(label);
+    return label !== null && SPECIAL_CELLS.includes(label);
 }
 
 export const generateSeats = (layout: BusLayout): Seat[] => {
-  const seats: Seat[] = [];
-  layout.rows.forEach((row, rowIdx) => {
-    row.forEach((cell, colIdx) => {
-      if (cell === null || isSpecialCell(cell)) return;
-      seats.push({
-        id: `s-${cell}`,
-        number: cell,
-        row: rowIdx,
-        col: colIdx,
-        status: "available",
-        floor: 1,
-      });
+    const seats: Seat[] = [];
+    layout.rows.forEach((row, rowIdx) => {
+        row.forEach((cell, colIdx) => {
+            if (cell === null || isSpecialCell(cell)) return;
+            seats.push({
+                id: `s-${cell}`,
+                number: cell,
+                row: rowIdx,
+                col: colIdx,
+                status: "available",
+                floor: 1,
+            });
+        });
     });
-  });
-  return seats;
+    return seats;
 };
 
 // --- Main Page ---
@@ -126,6 +157,8 @@ const PlanChair: React.FC = () => {
     const history = useHistory();
     const [trip, setTrip] = useState<Trip | null>(null);
     const [seats, setSeats] = useState<Seat[]>([]);
+    const [showSeatModal, setShowSeatModal] = useState(false);
+    const [selectedSeatData, setSelectedSeatData] = useState<SeatDetail | null>(null);
 
     const layout = useMemo(() => {
         if (!trip) return layout12m;
@@ -165,8 +198,8 @@ const PlanChair: React.FC = () => {
             if (dbSeat) {
                 return {
                     ...s,
-                    id: dbSeat.id,
-                    status: (dbSeat.is_available ? "available" : "booked") as SeatStatus,
+                    id: dbSeat.seat_number,
+                    status: "booked" as SeatStatus,
                     price: dbSeat.price
                 };
             }
@@ -179,16 +212,37 @@ const PlanChair: React.FC = () => {
         fetchTripAndSeats();
     }, [id, initialSeats]);
 
-    const toggleSeat = useCallback((seatId: string) => {
+    const toggleSeat = useCallback(async (seat: Seat) => {
+        if (seat.status === "booked" || seat.status === "unavailable") {
+            try {
+                const { data, error } = await supabase
+                    .from("seats")
+                    .select("*, ticket_id(*)")
+                    .eq("seat_number", seat.id)
+                    .eq("trip_id", id)
+                    .single();
+
+                if (error) {
+                    console.error("Error fetching seat:", error);
+                    return;
+                }
+                console.log("Seat detail:", data);
+                setSelectedSeatData(data as SeatDetail);
+                setShowSeatModal(true);
+            } catch (error) {
+                console.error("Error fetching seat:", error);
+            }
+            return;
+        }
+
         setSeats((prev) =>
             prev.map((s) => {
-                if (s.id !== seatId) return s;
-                if (s.status === "booked" || s.status === "unavailable") return s;
+                if (s.id !== seat.id) return s;
                 if (s.status === "selected") return { ...s, status: "available" };
                 return { ...s, status: "selected" };
             })
         );
-    }, []);
+    }, [id]);
 
     const handleContinue = () => {
         // Since this is for employee view, we just go back
@@ -226,15 +280,15 @@ const PlanChair: React.FC = () => {
                     {/* Legend */}
                     <div className="planchair-legend w-full max-w-md">
                         <div className="legend-item">
-                            <div className="legend-box available" /> 
+                            <div className="legend-box available" />
                             <span>ว่าง</span>
                         </div>
                         <div className="legend-item">
-                            <div className="legend-box selected" /> 
+                            <div className="legend-box selected" />
                             <span>เลือก</span>
                         </div>
                         <div className="legend-item">
-                            <div className="legend-box booked" /> 
+                            <div className="legend-box booked" />
                             <span>จองแล้ว</span>
                         </div>
                     </div>
@@ -243,7 +297,7 @@ const PlanChair: React.FC = () => {
                     <div className="bus-grid-card w-full max-w-sm mb-8">
                         {/* Bus Windshield effect */}
                         <div className="bus-windshield"></div>
-                        
+
                         <div className="space-y-4">
                             {layout.rows.map((row, rowIdx) => (
                                 <div key={rowIdx} className="bus-row">
@@ -275,12 +329,13 @@ const PlanChair: React.FC = () => {
                                             <button
                                                 key={seat.number}
                                                 onClick={() => {
-                                                    if (seat.status === 'booked') {
-                                                        // Example: Show info or alert
-                                                        console.log("Booked seat clicked:", seat.number);
-                                                    } else {
-                                                        toggleSeat(seat.id);
-                                                    }
+                                                    toggleSeat(seat);
+                                                    // if (seat.status === 'booked') {
+                                                    //     // Example: Show info or alert
+                                                    //     console.log("Booked seat clicked:", seat.number);
+                                                    // } else {
+
+                                                    // }
                                                 }}
                                                 disabled={seat.status === "unavailable"}
                                                 className={`seat-button ${statusClasses[seat.status]} ${aisleClass}`}
@@ -299,15 +354,15 @@ const PlanChair: React.FC = () => {
                                 </div>
                             ))}
                         </div>
-                        
+
                         {/* Bus Rear bumper effect */}
                         <div className="bus-bumper"></div>
                     </div>
 
-                    <IonButton 
-                        expand="block" 
-                        className="w-full max-w-sm" 
-                        mode="ios" 
+                    <IonButton
+                        expand="block"
+                        className="w-full max-w-sm"
+                        mode="ios"
                         color="primary"
                         onClick={handleContinue}
                     >
@@ -315,6 +370,143 @@ const PlanChair: React.FC = () => {
                     </IonButton>
                 </div>
             </IonContent>
+
+            {/* Booked Seat Detail — bottom sheet */}
+            <IonModal
+                isOpen={showSeatModal}
+                initialBreakpoint={0.8}
+                breakpoints={[0, 0.8]}
+                onDidDismiss={() => { setShowSeatModal(false); setSelectedSeatData(null); }}
+            >
+                <IonContent scrollY>
+                    {selectedSeatData && (() => {
+                        const ticket = selectedSeatData.ticket_id;
+                        const isCheckedIn = !!ticket?.checked_in_at;
+                        const passengerBadge = ticket?.passenger_type === 'male' ? 'ช' : 'ญ';
+                        const calcDuration = (dep?: string, arr?: string) => {
+                            if (!dep || !arr) return '-';
+                            const [dh, dm] = dep.split(':').map(Number);
+                            const [ah, am] = arr.split(':').map(Number);
+                            const diff = (ah * 60 + am) - (dh * 60 + dm);
+                            if (diff <= 0) return '-';
+                            return `${Math.floor(diff / 60)}.${(diff % 60).toString().padStart(2, '0')} ชม.`;
+                        };
+
+                        return (
+                            <div className="flex flex-col h-full">
+                                {/* Header */}
+                                <div className="flex items-center justify-between px-5 pt-5 pb-4 ">
+                                    <h2 className="text-lg font-bold text-slate-800 ion-margin-start">ที่นั่ง {selectedSeatData.seat_number}</h2>
+                                    <button
+                                        onClick={() => { setShowSeatModal(false); setSelectedSeatData(null); }}
+                                        className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                                <IonRow>
+                                    <IonCol size="12" className="set-center " style={{ flexDirection: "column" }}>
+                                        <div className="set-center" style={{ width: "7rem", height: "7rem", border: "1px solid #b8b8b8", borderRadius: "1rem" }} >
+                                            <Armchair className="  text-slate-300" style={{ width: "50%", height: "50%" }} />
+                                        </div>
+                                        <p className="text-slate-400 mt-3 text-base font-medium">{selectedSeatData.seat_number}</p>
+                                    </IonCol>
+                                </IonRow>
+
+                                {/* Scrollable body */}
+                                <div className="flex-1 w-full " style={{ justifyContent: "flex-start", alignItems: "center", display: "flex", flexDirection: "column", paddingTop: "1rem" }} >
+
+                                    <div className="ion-padding" style={{ backgroundColor: "#fafafa", width: "90%", borderRadius: "1rem" }} >
+                                        {ticket && (
+                                            <div className="col-span-3 bg-slate-50 rounded-2xl p-4 mb-3 space-y-3">
+                                                <div className="flex justify-between items-start">
+                                                    <span className="text-sm text-slate-500">สถานะ</span>
+                                                    <span className="text-sm font-semibold text-slate-800 text-right">
+                                                        {isCheckedIn ? 'เช็คอินแล้ว' : 'จองตั๋วแล้ว รอผู้โดยสาร'}
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-sm text-slate-500">ชื่อ-สกุล</span>
+                                                    <span className="text-sm font-semibold text-slate-800">{ticket.passenger_name}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-sm text-slate-500">หมายเลขโทรศัพท์</span>
+                                                    <span className="text-sm font-semibold text-slate-800">{ticket.passenger_phone}</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div> <br />
+
+                                    {/* Passenger info card */}
+
+                                    {/* Trip info card */}
+                                    <div className="ion-padding" style={{ backgroundColor: "#fafafa", width: "90%", borderRadius: "1rem" }} >
+                                        {ticket && (
+                                            <div className="flex justify-between items-start">
+                                                <span className="text-sm text-slate-500">เลขจอง</span>
+                                                <span className="text-xs font-mono font-semibold text-slate-800 text-right break-all max-w-[60%]">
+                                                    #{ticket.ticket_number}
+                                                </span>
+                                            </div>
+                                        )}
+                                        {trip && (
+                                            <>
+                                                <div className="flex justify-between items-start">
+                                                    <span className="text-sm text-slate-500">จุดขึ้น</span>
+                                                    <span className="text-sm font-semibold text-slate-800 text-right max-w-[60%]">{trip.route_id?.origin}</span>
+                                                </div>
+                                                <div className="flex justify-between items-start">
+                                                    <span className="text-sm text-slate-500">จุดลง</span>
+                                                    <span className="text-sm font-semibold text-slate-800 text-right max-w-[60%]">{trip.route_id?.destination}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-sm text-slate-500">เวลาออก</span>
+                                                    <span className="text-sm font-semibold text-slate-800">{trip.departure_time}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-sm text-slate-500">เวลาถึง</span>
+                                                    <span className="text-sm font-semibold text-slate-800">{trip.arrival_time}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-sm text-slate-500">ระยะเวลา</span>
+                                                    <span className="text-sm font-semibold text-slate-800">
+                                                        {calcDuration(trip.departure_time, trip.arrival_time)}
+                                                    </span>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+
+
+                            </div>
+                        );
+                    })()}
+                    <div className="px-5 pb-6 pt-3 border-t border-slate-100 flex gap-3">
+                        <IonButton
+                            expand="block"
+                            fill="solid"
+                            color="primary"
+                            mode="ios"
+                            className="flex-1 m-0"
+                        >
+                            เช็คอินผู้โดยสาร
+                        </IonButton>
+                        <IonButton
+                            expand="block"
+                            fill="outline"
+                            color="primary"
+                            mode="ios"
+                            className="flex-1 m-0"
+                        >
+                            ติดต่อผู้โดยสาร
+                        </IonButton>
+                    </div>
+                </IonContent>
+                <IonFooter>
+                    {/* Action buttons */}
+                </IonFooter>
+            </IonModal>
         </IonPage>
     );
 };

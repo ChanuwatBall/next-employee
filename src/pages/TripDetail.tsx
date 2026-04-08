@@ -15,69 +15,7 @@ const TripDetail: React.FC = () => {
   const history = useHistory();
   const [stationacc, setStationAcc] = React.useState<string>("");
   const [trip, setTrip] = React.useState<Trip | null>(null);
-
-  // // mock data to match mockup
-  // const trip = {
-  //   id: '1',
-  //   title: 'โคราช - กทม.',
-  //   time: '07:20',
-  //   arrive: '09:40',
-  //   tripdate: "2024-06-20",
-  //   passsengerOnboard: 25,
-  //   totalPassenger: 37,
-  //   disabledSeat: 3,
-  //   isOnBoard: true,
-  //   bus: 'Premium Bus',
-  //   seats: 40,
-  //   code: 'TRIP12345',
-  //   departure: "โคราช",
-  //   destination: "กรุงเทพฯ",
-  //   duration: "2 ชม. 20 นาที",
-  //   facilities: "WiFi, ปลั๊กชาร์จ, ผ้าห่ม, น้ำดื่ม, ขนม",
-  //   tripStation: [
-  //     {
-  //       id: '1',
-  //       name: 'บขส. หมอชิตใหม่ ช่องจำหน่าตั๋ว 58',
-  //       time: '07:20',
-  //       type: 'departure',
-  //       passengerOnboard: 3,
-  //       passengerOffboard: 0,
-  //     },
-  //     {
-  //       id: '2',
-  //       name: 'บขส. หมอชิตใหม่ ชานชลา 119',
-  //       time: '08:00',
-  //       type: 'stopover',
-  //       passengerOnboard: 2,
-  //       passengerOffboard: 0,
-  //     },
-  //     {
-  //       id: '3',
-  //       name: 'รังสิต หน้า ม.กรุงเทพฯ',
-  //       time: '09:40',
-  //       type: 'arrival',
-  //       passengerOnboard: 1,
-  //       passengerOffboard: 0,
-  //     },
-  //     {
-  //       id: '4',
-  //       name: 'นวนคร รพ.การุญเวช',
-  //       time: '09:40',
-  //       type: 'arrival',
-  //       passengerOnboard: 0,
-  //       passengerOffboard: 1,
-  //     },
-  //     {
-  //       id: '5',
-  //       name: 'วังน้อย (จุดปั๊มใบเวลา)',
-  //       time: '10:00',
-  //       type: 'arrival',
-  //       passengerOnboard: 0,
-  //       passengerOffboard: 0,
-  //     }
-  //   ]
-  // };
-
+ 
   const getTrip = async () => {
     const { data, error } = await supabase.from('trips')
       .select('*, route_id(*)')
@@ -87,12 +25,47 @@ const TripDetail: React.FC = () => {
       console.log(error);
     }
     if (data) {
-      // console.log("data ", data);
+      const {data:dataBooking , error:bookingError} = await supabase.from('bookings').select('*')
+        .eq('trip_id', id)
+      if(bookingError){
+        throw bookingError
+      }
+     console.log("dataBooking ", dataBooking);
+
+      const {data:dataSeats , error:seatsError} = await supabase.from('seats').select('*').eq('trip_id', id)
+      if(seatsError){
+        throw seatsError
+      }
+     
       const { data: busStops, error: busStopsError } = await supabase.from('bus_stops')
         .select('*')
         .eq('route_id', data.route_id.id)
       if (busStopsError) {
         throw busStopsError
+      }
+      console.log("busStops ", busStops);
+      for(const bsp of busStops){
+        let passengerOnboard = 0;
+        let passengerOffboard = 0;
+        for(const booking of dataBooking){
+          if(booking.pickup_stop === bsp.name){
+            const isonboard = dataBooking.filter((b) => b.pickup_stop === bsp.name );
+           if(isonboard){
+            console.log( bsp.name + " isonboard ", isonboard);
+            passengerOnboard += isonboard.length
+           }
+          }
+          if(booking.dropoff_stop === bsp.name){
+            const isoffboard = dataBooking.filter((b) => b.dropoff_stop === bsp.name );
+            
+           if(isoffboard){
+            console.log( bsp.name + " isoffboard ", isoffboard);
+            passengerOffboard += isoffboard.length
+          }
+        }
+        }
+        bsp.passengerOnboard = passengerOnboard;
+        bsp.passengerOffboard = passengerOffboard;
       }
       data.bus_stops = busStops
 

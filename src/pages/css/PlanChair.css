@@ -223,3 +223,9 @@
     border: none;
     pointer-events: none;
 }
+
+.set-center{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
