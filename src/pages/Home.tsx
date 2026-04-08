@@ -42,6 +42,7 @@ const Home: React.FC = () => {
       const { data: seatData, error: seatError } = await supabase.from('seats')
         .select('*')
         .in('trip_id', tripid)
+        .order('id', { ascending: false })
 
       console.log("data ", data);
       for (const trip of data) {
@@ -207,7 +208,7 @@ const Home: React.FC = () => {
                 tripdate={trip.date}
                 passengerOnboard={trip.total_seats - trip.available_seats}
                 totalPassenger={trip.total_seats}
-                isOnBoard={moment(`${trip.date} ${trip?.arrival_time}`).isAfter(moment())}
+                isOnBoard={moment(`${trip.date} ${trip?.departure_time}`).isBefore(moment())}
                 select={() => history.push(`/trip/${trip.id}`)}
               />
             </BouceAnimation>

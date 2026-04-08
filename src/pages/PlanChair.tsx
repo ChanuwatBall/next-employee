@@ -22,6 +22,8 @@ import { supabase } from "../supabase/supabase";
 import { Trip } from "../types/trip";
 import moment from "moment";
 import "./css/PlanChair.css";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCircleCheck, faClock } from "@fortawesome/free-solid-svg-icons";
 
 // --- Types ---
 type SeatStatus = "available" | "booked" | "unavailable" | "selected";
@@ -34,6 +36,21 @@ interface Seat {
     status: SeatStatus;
     floor: number;
     price?: number;
+    ticket_id:null | {
+        "id": string
+        "price": number
+        "status": string
+        "qr_code":  string
+        "booking_id": string | null,
+        "created_at": string | Date
+        "seat_number": string
+        "checked_in_at":string | null
+        "ticket_number": string
+        "passenger_name": string
+        "passenger_type": string
+        "passenger_phone": string
+        "passenger_id_card": string
+    }
 }
 
 interface BusLayout {
@@ -145,6 +162,7 @@ export const generateSeats = (layout: BusLayout): Seat[] => {
                 col: colIdx,
                 status: "available",
                 floor: 1,
+                ticket_id: null
             });
         });
     });
@@ -185,7 +203,7 @@ const PlanChair: React.FC = () => {
         // 2. Fetch occupied seats
         const { data: seatData, error: seatError } = await supabase
             .from("seats")
-            .select("*")
+            .select("* , ticket_id(*)")
             .eq("trip_id", id);
 
         if (seatError) {
@@ -200,7 +218,8 @@ const PlanChair: React.FC = () => {
                     ...s,
                     id: dbSeat.seat_number,
                     status: "booked" as SeatStatus,
-                    price: dbSeat.price
+                    price: dbSeat.price,
+                    ticket_id: dbSeat.ticket_id
                 };
             }
             return s;
@@ -247,6 +266,40 @@ const PlanChair: React.FC = () => {
     const handleContinue = () => {
         // Since this is for employee view, we just go back
         history.goBack();
+    }
+
+    const checkInSeat = async () => {
+        if (!selectedSeatData) return;
+        const seatNumber = selectedSeatData.seat_number;
+        const tripId = id;
+        const checkedAt = moment().format();
+        try {
+            const { data, error } = await supabase
+                .from('tickets')
+                .update({ checked_in_at: checkedAt }) 
+                .eq('id', selectedSeatData.ticket_id?.id);
+
+            if (error) {
+                console.error('Error checking in ticket:', error);
+                return;
+            }
+
+            // update local state to reflect check-in
+            setSelectedSeatData(prev => {
+                if (!prev) return prev;
+                return {
+                    ...prev,
+                    ticket_id: prev.ticket_id ? { ...prev.ticket_id, checked_in_at: checkedAt } : prev.ticket_id
+                } as SeatDetail;
+            });
+
+            setSeats(prev => prev.map(s => s.number === seatNumber ? { ...s, status: 'booked' } : s));
+
+            // refresh seats/layout from server to reflect latest state
+            await fetchTripAndSeats();
+        } catch (err) {
+            console.error('Unexpected error during check-in:', err);
+        }
     }
 
     return (
@@ -338,16 +391,25 @@ const PlanChair: React.FC = () => {
                                                     // }
                                                 }}
                                                 disabled={seat.status === "unavailable"}
-                                                className={`seat-button ${statusClasses[seat.status]} ${aisleClass}`}
+                                                className={`seat-button ${statusClasses[seat.status]} ${aisleClass} relative`}
                                             >
                                                 {seat.status === "booked" ? (
-                                                    <div className="flex flex-col items-center">
-                                                        <User className="w-4 h-4 mb-0.5" />
-                                                        <span className="text-[7px] leading-none">{seat.number}</span>
+                                                    <div className="flex flex-col items-center ">
+                                                        <User className="  text-slate-300"   style={{ width: "80%", height: "80%" ,marginTop:" 0rem"}} />
+                                                        <span className="text-[16px] leading-none">{seat.number}</span> 
                                                     </div>
-                                                ) : (
-                                                    seat.number
-                                                )}
+                                                ) : (<>
+                                                   <Armchair className="  text-slate-300" style={{ width: "40%", height: "40%" ,marginTop:"-.8rem"}} />
+                                                  <IonLabel style={{position:"absolute", bottom:"6px"}}>{seat.number}</IonLabel>
+                                                </>)}
+                                                  { seat.status === "booked" && seat?.ticket_id?.checked_in_at === null &&  
+                                                       <FontAwesomeIcon icon={faClock} 
+                                                       style={{position:"absolute",right:"-10%",top:"-10%",color:"#f5cb42"}}/>  
+                                                  }
+                                                  { seat.status === "booked" && seat?.ticket_id?.checked_in_at !== null &&  
+                                                       <FontAwesomeIcon icon={faCircleCheck} 
+                                                       style={{position:"absolute",right:"-10%",top:"-10%",color:"#30d203"}}/> 
+                                                  }
                                             </button>
                                         );
                                     })}
@@ -357,7 +419,7 @@ const PlanChair: React.FC = () => {
 
                         {/* Bus Rear bumper effect */}
                         <div className="bus-bumper"></div>
-                    </div>
+                    </div><br/>
 
                     <IonButton
                         expand="block"
@@ -393,21 +455,30 @@ const PlanChair: React.FC = () => {
                         };
 
                         return (
-                            <div className="flex flex-col h-full">
+                            <div className="flex flex-col  ">
                                 {/* Header */}
                                 <div className="flex items-center justify-between px-5 pt-5 pb-4 ">
                                     <h2 className="text-lg font-bold text-slate-800 ion-margin-start">ที่นั่ง {selectedSeatData.seat_number}</h2>
                                     <button
                                         onClick={() => { setShowSeatModal(false); setSelectedSeatData(null); }}
-                                        className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500"
+                                        className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 relative ion-margin-end"
                                     >
                                         <X className="w-4 h-4" />
+                                    
                                     </button>
                                 </div>
                                 <IonRow>
                                     <IonCol size="12" className="set-center " style={{ flexDirection: "column" }}>
-                                        <div className="set-center" style={{ width: "7rem", height: "7rem", border: "1px solid #b8b8b8", borderRadius: "1rem" }} >
+                                        <div className="set-center relative" style={{ width: "7rem", height: "7rem", border: "1px solid #b8b8b8", borderRadius: "1rem" }} >
                                             <Armchair className="  text-slate-300" style={{ width: "50%", height: "50%" }} />
+                                           {selectedSeatData?.ticket_id && selectedSeatData?.ticket_id?.checked_in_at === null &&  
+                                            <FontAwesomeIcon icon={faClock} 
+                                            style={{position:"absolute",right:"20%",top:"20%",color:"#f5cb42"}}/> 
+                                            }
+                                              { selectedSeatData?.ticket_id && selectedSeatData?.ticket_id?.checked_in_at !== null &&  
+                                            <FontAwesomeIcon icon={faCircleCheck} 
+                                            style={{position:"absolute",right:"20%",top:"20%",color:"#30d203"}}/> 
+                                              }
                                         </div>
                                         <p className="text-slate-400 mt-3 text-base font-medium">{selectedSeatData.seat_number}</p>
                                     </IonCol>
@@ -482,13 +553,17 @@ const PlanChair: React.FC = () => {
                             </div>
                         );
                     })()}
-                    <div className="px-5 pb-6 pt-3 border-t border-slate-100 flex gap-3">
+                    <br/>
+                    <div className="px-5 pb-6 pt-3 border-slate-100 flex gap-3 mt-8 ion-padding-horizontal" 
+                    style={{ borderTop: "1px solid #e5e5e5", width: "100%", maxWidth: "720px" }} >
                         <IonButton
                             expand="block"
                             fill="solid"
                             color="primary"
                             mode="ios"
                             className="flex-1 m-0"
+                            onClick={checkInSeat}
+                            disabled={!!selectedSeatData?.ticket_id?.checked_in_at}
                         >
                             เช็คอินผู้โดยสาร
                         </IonButton>
@@ -502,10 +577,9 @@ const PlanChair: React.FC = () => {
                             ติดต่อผู้โดยสาร
                         </IonButton>
                     </div>
+                   
+                
                 </IonContent>
-                <IonFooter>
-                    {/* Action buttons */}
-                </IonFooter>
             </IonModal>
         </IonPage>
     );

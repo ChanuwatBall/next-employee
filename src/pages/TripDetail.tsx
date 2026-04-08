@@ -15,7 +15,7 @@ const TripDetail: React.FC = () => {
   const history = useHistory();
   const [stationacc, setStationAcc] = React.useState<string>("");
   const [trip, setTrip] = React.useState<Trip | null>(null);
- 
+
   const getTrip = async () => {
     const { data, error } = await supabase.from('trips')
       .select('*, route_id(*)')
@@ -25,44 +25,46 @@ const TripDetail: React.FC = () => {
       console.log(error);
     }
     if (data) {
-      const {data:dataBooking , error:bookingError} = await supabase.from('bookings').select('*')
+      const { data: dataBooking, error: bookingError } = await supabase.from('bookings').select('*')
         .eq('trip_id', id)
-      if(bookingError){
-        throw bookingError
+      if (bookingError) {
+        throw "dataBooking err " + bookingError
       }
-     console.log("dataBooking ", dataBooking);
+      console.log("dataBooking ", dataBooking);
 
-      const {data:dataSeats , error:seatsError} = await supabase.from('seats').select('*').eq('trip_id', id)
-      if(seatsError){
-        throw seatsError
-      }
-     
+      
+
+      // const {data:dataSeats , error:seatsError} = await supabase.from('seats').select('*').eq('trip_id', id)
+      // if(seatsError){
+      //   throw seatsError
+      // }
+
       const { data: busStops, error: busStopsError } = await supabase.from('bus_stops')
         .select('*')
-        .eq('route_id', data.route_id.id)
+      .eq('route_id', data.route_id.id)
       if (busStopsError) {
         throw busStopsError
       }
       console.log("busStops ", busStops);
-      for(const bsp of busStops){
+      for (const bsp of busStops) {
         let passengerOnboard = 0;
         let passengerOffboard = 0;
-        for(const booking of dataBooking){
-          if(booking.pickup_stop === bsp.name){
-            const isonboard = dataBooking.filter((b) => b.pickup_stop === bsp.name );
-           if(isonboard){
-            console.log( bsp.name + " isonboard ", isonboard);
-            passengerOnboard += isonboard.length
-           }
+        for (const booking of dataBooking) {
+          if (booking.pickup_stop === bsp.name) {
+            const isonboard = dataBooking.filter((b) => b.pickup_stop === bsp.name);
+            if (isonboard) {
+              console.log(bsp.name + " isonboard ", isonboard);
+              passengerOnboard += isonboard.length
+            }
           }
-          if(booking.dropoff_stop === bsp.name){
-            const isoffboard = dataBooking.filter((b) => b.dropoff_stop === bsp.name );
-            
-           if(isoffboard){
-            console.log( bsp.name + " isoffboard ", isoffboard);
-            passengerOffboard += isoffboard.length
+          if (booking.dropoff_stop === bsp.name) {
+            const isoffboard = dataBooking.filter((b) => b.dropoff_stop === bsp.name);
+
+            if (isoffboard) {
+              console.log(bsp.name + " isoffboard ", isoffboard);
+              passengerOffboard += isoffboard.length
+            }
           }
-        }
         }
         bsp.passengerOnboard = passengerOnboard;
         bsp.passengerOffboard = passengerOffboard;

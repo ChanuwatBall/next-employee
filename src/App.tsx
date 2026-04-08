@@ -18,7 +18,8 @@ import Trips from './pages/Trips';
 import TripDetail from './pages/TripDetail';
 import TicketDetail from './pages/TicketDetail';
 import Sigin from './pages/Sigin';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { supabase } from './supabase/supabase';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -58,7 +59,113 @@ import { faHouse, faUser } from '@fortawesome/free-regular-svg-icons';
 setupIonicReact();
 
 const App: React.FC = () => {
-  const isAuthenticated = typeof window !== 'undefined' && localStorage.getItem('isAuthenticated') === 'true';
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(typeof window !== 'undefined' && localStorage.getItem('isAuthenticated') === 'true');
+
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.warn('Supabase signOut error', err);
+    } finally {
+      localStorage.removeItem('isAuthenticated');
+      localStorage.removeItem('username');
+      localStorage.removeItem('role');
+      localStorage.removeItem('user');
+      localStorage.removeItem('session');
+      window.location.href = '/signin';
+    }
+  };
+
+  const getExpiryFromSession = (session: any): number | null => {
+    if (!session) return null;
+    // session.expires_at is usually unix seconds
+    if (session.expires_at) {
+      const val = Number(session.expires_at);
+      if (val > 1e12) return val; // ms
+      return val * 1000; // seconds -> ms
+    }
+    // session.expires_in (seconds from creation)
+    if (session.expires_in) {
+      const val = Number(session.expires_in);
+      if (!Number.isNaN(val)) return Date.now() + val * 1000;
+    }
+    // try decode access_token (JWT) to get exp
+    try {
+      const token = session.access_token || session.refresh_token;
+      if (token) {
+        const parts = token.split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(atob(parts[1]));
+          if (payload && payload.exp) return Number(payload.exp) * 1000;
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+    return null;
+  };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    let timeoutId: number | null = null;
+
+    const clearExistingTimeout = () => {
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+    };
+
+    const setupTimeoutFromSession = () => {
+      clearExistingTimeout();
+      const sessionRaw = localStorage.getItem('session');
+      let expiry = null as number | null;
+      try {
+        const sessionObj = sessionRaw ? JSON.parse(sessionRaw) : null;
+        expiry = getExpiryFromSession(sessionObj);
+      } catch (e) {
+        expiry = null;
+      }
+      if (expiry) {
+        const ms = expiry - Date.now();
+        if (ms <= 0) {
+          logout();
+          return;
+        }
+        timeoutId = window.setTimeout(() => {
+          logout();
+        }, ms) as unknown as number;
+      }
+    };
+
+    // initial setup
+    setupTimeoutFromSession();
+
+    // storage event to sync logout/login across tabs
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key) return;
+      if (e.key === 'isAuthenticated') {
+        const auth = localStorage.getItem('isAuthenticated') === 'true';
+        setIsAuthenticated(auth);
+        if (!auth) {
+          // other tab logged out
+          logout();
+        }
+      }
+      if (e.key === 'session') {
+        // session updated in another tab; reset timeout
+        setupTimeoutFromSession();
+      }
+    };
+
+    window.addEventListener('storage', onStorage);
+
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      clearExistingTimeout();
+    };
+  }, []);
   return (
     <IonApp>
       <IonReactRouter>
