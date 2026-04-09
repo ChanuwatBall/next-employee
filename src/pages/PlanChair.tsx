@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useCallback, useEffect } from "react";
+import { getTripSeats } from "../https/api";
 import { useParams, useHistory } from "react-router-dom";
 import {
     IonPage,
@@ -36,15 +37,15 @@ interface Seat {
     status: SeatStatus;
     floor: number;
     price?: number;
-    ticket_id:null | {
+    ticket_id: null | {
         "id": string
         "price": number
         "status": string
-        "qr_code":  string
+        "qr_code": string
         "booking_id": string | null,
         "created_at": string | Date
         "seat_number": string
-        "checked_in_at":string | null
+        "checked_in_at": string | null
         "ticket_number": string
         "passenger_name": string
         "passenger_type": string
@@ -178,58 +179,53 @@ const PlanChair: React.FC = () => {
     const [showSeatModal, setShowSeatModal] = useState(false);
     const [selectedSeatData, setSelectedSeatData] = useState<SeatDetail | null>(null);
 
-    const layout = useMemo(() => {
-        if (!trip) return layout12m;
-        const busTypeName = trip.bus_type?.name || '';
-        return getBusLayout(busTypeName, trip.total_seats || 40);
-    }, [trip]);
-
-    const initialSeats = useMemo(() => generateSeats(layout), [layout]);
+    const [layout, setLayout] = useState<BusLayout>(layout12m);
 
     const fetchTripAndSeats = async () => {
-        // 1. Fetch Trip
-        const { data: tripData, error: tripError } = await supabase
-            .from("trips")
-            .select("*, route_id(*), bus_type:bus_type_id(*)")
-            .eq("id", id)
-            .single();
+        try {
+            // 1. Fetch Trip from Supabase for UI info
+            const { data: tripData, error: tripError } = await supabase
+                .from("trips")
+                .select("*, route_id(*), bus_type:bus_type_id(*)")
+                .eq("id", id)
+                .single();
 
-        if (tripError) {
-            console.error("Error fetching trip:", tripError);
-            return;
-        }
-        setTrip(tripData as any);
-
-        // 2. Fetch occupied seats
-        const { data: seatData, error: seatError } = await supabase
-            .from("seats")
-            .select("* , ticket_id(*)")
-            .eq("trip_id", id);
-
-        if (seatError) {
-            console.error("Error fetching seats:", seatError);
-            return;
-        }
-
-        const mergedSeats = initialSeats.map(s => {
-            const dbSeat = seatData?.find(ds => ds.seat_number.trim().toUpperCase() === s.number.trim().toUpperCase());
-            if (dbSeat) {
-                return {
-                    ...s,
-                    id: dbSeat.seat_number,
-                    status: "booked" as SeatStatus,
-                    price: dbSeat.price,
-                    ticket_id: dbSeat.ticket_id
-                };
+            if (tripError && tripError.code !== 'PGRST116') {
+                console.error("Error fetching trip:", tripError);
             }
-            return s;
-        });
-        setSeats(mergedSeats);
+            if (tripData) {
+                setTrip(tripData as any);
+            }
+
+            // 2. Fetch Layout and Seats from Nex API
+            const apiData = await getTripSeats(id);
+
+            if (apiData) {
+                if (apiData.layout) {
+                    setLayout(apiData.layout);
+                }
+                if (apiData.seats) {
+                    // Map API seats to our Seat type
+                    const mappedSeats: Seat[] = apiData.seats.map((s: any) => ({
+                        id: s.number, // Use seat number as ID for consistency with Supabase queries
+                        number: s.number,
+                        row: s.row,
+                        col: s.col,
+                        status: s.status as SeatStatus,
+                        floor: s.floor,
+                        ticket_id: null // Will be populated if needed when clicking
+                    }));
+                    setSeats(mappedSeats);
+                }
+            }
+        } catch (error) {
+            console.error("Error in fetchTripAndSeats:", error);
+        }
     }
 
     useEffect(() => {
         fetchTripAndSeats();
-    }, [id, initialSeats]);
+    }, [id]);
 
     const toggleSeat = useCallback(async (seat: Seat) => {
         if (seat.status === "booked" || seat.status === "unavailable") {
@@ -276,7 +272,7 @@ const PlanChair: React.FC = () => {
         try {
             const { data, error } = await supabase
                 .from('tickets')
-                .update({ checked_in_at: checkedAt }) 
+                .update({ checked_in_at: checkedAt })
                 .eq('id', selectedSeatData.ticket_id?.id);
 
             if (error) {
@@ -355,7 +351,7 @@ const PlanChair: React.FC = () => {
                             {layout.rows.map((row, rowIdx) => (
                                 <div key={rowIdx} className="bus-row">
                                     {row.map((cell, colIdx) => {
-                                        const isAisle = colIdx === 1 && (layout.id === '12m' || layout.id === '7m');
+                                        const isAisle = colIdx === 1 && (layout.id.includes('12m') || layout.id.includes('7m'));
                                         const aisleClass = isAisle ? "aisle-margin" : "";
 
                                         if (cell === null) {
@@ -395,21 +391,21 @@ const PlanChair: React.FC = () => {
                                             >
                                                 {seat.status === "booked" ? (
                                                     <div className="flex flex-col items-center ">
-                                                        <User className="  text-slate-300"   style={{ width: "80%", height: "80%" ,marginTop:" 0rem"}} />
-                                                        <span className="text-[16px] leading-none">{seat.number}</span> 
+                                                        <User className="  text-slate-300" style={{ width: "80%", height: "80%", marginTop: " 0rem" }} />
+                                                        <span className="text-[16px] leading-none">{seat.number}</span>
                                                     </div>
                                                 ) : (<>
-                                                   <Armchair className="  text-slate-300" style={{ width: "40%", height: "40%" ,marginTop:"-.8rem"}} />
-                                                  <IonLabel style={{position:"absolute", bottom:"6px"}}>{seat.number}</IonLabel>
+                                                    <Armchair className="  text-slate-300" style={{ width: "40%", height: "40%", marginTop: "-.8rem" }} />
+                                                    <IonLabel style={{ position: "absolute", bottom: "6px" }}>{seat.number}</IonLabel>
                                                 </>)}
-                                                  { seat.status === "booked" && seat?.ticket_id?.checked_in_at === null &&  
-                                                       <FontAwesomeIcon icon={faClock} 
-                                                       style={{position:"absolute",right:"-10%",top:"-10%",color:"#f5cb42"}}/>  
-                                                  }
-                                                  { seat.status === "booked" && seat?.ticket_id?.checked_in_at !== null &&  
-                                                       <FontAwesomeIcon icon={faCircleCheck} 
-                                                       style={{position:"absolute",right:"-10%",top:"-10%",color:"#30d203"}}/> 
-                                                  }
+                                                {seat.status === "booked" && seat?.ticket_id?.checked_in_at === null &&
+                                                    <FontAwesomeIcon icon={faClock}
+                                                        style={{ position: "absolute", right: "-10%", top: "-10%", color: "#f5cb42" }} />
+                                                }
+                                                {seat.status === "booked" && seat?.ticket_id?.checked_in_at !== null &&
+                                                    <FontAwesomeIcon icon={faCircleCheck}
+                                                        style={{ position: "absolute", right: "-10%", top: "-10%", color: "#30d203" }} />
+                                                }
                                             </button>
                                         );
                                     })}
@@ -419,7 +415,7 @@ const PlanChair: React.FC = () => {
 
                         {/* Bus Rear bumper effect */}
                         <div className="bus-bumper"></div>
-                    </div><br/>
+                    </div><br />
 
                     <IonButton
                         expand="block"
@@ -464,21 +460,21 @@ const PlanChair: React.FC = () => {
                                         className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 relative ion-margin-end"
                                     >
                                         <X className="w-4 h-4" />
-                                    
+
                                     </button>
                                 </div>
                                 <IonRow>
                                     <IonCol size="12" className="set-center " style={{ flexDirection: "column" }}>
                                         <div className="set-center relative" style={{ width: "7rem", height: "7rem", border: "1px solid #b8b8b8", borderRadius: "1rem" }} >
                                             <Armchair className="  text-slate-300" style={{ width: "50%", height: "50%" }} />
-                                           {selectedSeatData?.ticket_id && selectedSeatData?.ticket_id?.checked_in_at === null &&  
-                                            <FontAwesomeIcon icon={faClock} 
-                                            style={{position:"absolute",right:"20%",top:"20%",color:"#f5cb42"}}/> 
+                                            {selectedSeatData?.ticket_id && selectedSeatData?.ticket_id?.checked_in_at === null &&
+                                                <FontAwesomeIcon icon={faClock}
+                                                    style={{ position: "absolute", right: "20%", top: "20%", color: "#f5cb42" }} />
                                             }
-                                              { selectedSeatData?.ticket_id && selectedSeatData?.ticket_id?.checked_in_at !== null &&  
-                                            <FontAwesomeIcon icon={faCircleCheck} 
-                                            style={{position:"absolute",right:"20%",top:"20%",color:"#30d203"}}/> 
-                                              }
+                                            {selectedSeatData?.ticket_id && selectedSeatData?.ticket_id?.checked_in_at !== null &&
+                                                <FontAwesomeIcon icon={faCircleCheck}
+                                                    style={{ position: "absolute", right: "20%", top: "20%", color: "#30d203" }} />
+                                            }
                                         </div>
                                         <p className="text-slate-400 mt-3 text-base font-medium">{selectedSeatData.seat_number}</p>
                                     </IonCol>
@@ -553,9 +549,9 @@ const PlanChair: React.FC = () => {
                             </div>
                         );
                     })()}
-                    <br/>
-                    <div className="px-5 pb-6 pt-3 border-slate-100 flex gap-3 mt-8 ion-padding-horizontal" 
-                    style={{ borderTop: "1px solid #e5e5e5", width: "100%", maxWidth: "720px" }} >
+                    <br />
+                    <div className="px-5 pb-6 pt-3 border-slate-100 flex gap-3 mt-8 ion-padding-horizontal"
+                        style={{ borderTop: "1px solid #e5e5e5", width: "100%", maxWidth: "720px" }} >
                         <IonButton
                             expand="block"
                             fill="solid"
@@ -577,8 +573,8 @@ const PlanChair: React.FC = () => {
                             ติดต่อผู้โดยสาร
                         </IonButton>
                     </div>
-                   
-                
+
+
                 </IonContent>
             </IonModal>
         </IonPage>
