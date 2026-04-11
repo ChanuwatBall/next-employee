@@ -1,9 +1,11 @@
 import { faArrowLeft, faArrowRight, faCarSide } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonButton, IonGrid, IonRow, IonCol, IonButtons, IonIcon, IonText, IonLabel, IonList, IonItem, IonItemOptions, IonItemOption, IonItemSliding, useIonActionSheet, useIonAlert } from '@ionic/react';
+import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonButton, IonGrid, IonRow, IonCol, IonButtons, IonIcon, IonText, IonLabel, IonList, IonItem, IonItemOptions, IonItemOption, IonItemSliding, useIonActionSheet, useIonAlert, useIonLoading } from '@ionic/react';
 import { color } from 'framer-motion';
-import { arrowBackCircleOutline, book, callOutline, chatbubbleEllipses, checkmarkCircleOutline } from 'ionicons/icons';
+import { arrowBackCircleOutline, book, callOutline, chatbubbleEllipses, checkmarkCircleOutline, thumbsUpOutline, thumbsDownOutline, helpCircleOutline } from 'ionicons/icons';
 import moment from 'moment';
+import { usePhoneCallFlow, CallResult } from '../hooks/usePhoneCallFlow';
+import { useIonToast, IonActionSheet } from '@ionic/react';
 import React, { use, useEffect } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import { BouceAnimation } from '../components/Animations';
@@ -15,40 +17,126 @@ const TicketDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const history = useHistory();
   const [actionSheet, dimissActionSheet] = useIonActionSheet();
-  const [booking, setBooking] = React.useState<Booking | null>(null);
+  const [booking, setBooking] = React.useState<any | null>(null);
   const [ionalert, dimissIonAlert] = useIonAlert();
+  const [iontoast] = useIonToast();
+  const [present, dismiss] = useIonLoading();
 
-  // const ticket = {
-  //   id: "OGHTROHTRJHO",
-  //   trip: {
-  //     id: '1',
-  //     title: 'โคราช - กทม.',
-  //     time: '07:20',
-  //     arrive: '09:40',
-  //     tripdate: "2024-06-20",
-  //     isOnBoard: true,
-  //     departure: "โคราช",
-  //     destination: "กรุงเทพฯ",
-  //     duration: "2 ชม. 20 นาที",
-  //     facilities: "WiFi, ปลั๊กชาร์จ, ผ้าห่ม, น้ำดื่ม, ขนม",
-  //   },
-  //   passengers: [
-  //     { id: '1', name: 'นายสมชาย ใจดี', seat: '1A', status: 'onboard', phone: "08x-xxx-xxxx" },
-  //     { id: '2', name: 'นางสาวสมหญิง แสนดี', seat: '1B', status: 'onboard', phone: "08x-xxx-xxxx" },
-  //     { id: '3', name: 'นายสมปอง ดีใจ', seat: '2A', status: 'onboard', phone: "08x-xxx-xxxx" },
-  //   ],
-  //   upLocation: "ช่องจำหน่ายตั๋ว 58",
-  //   downLocation: "โลตัสปากช่อง",
-  //   code: "TICKET12345",
-  // }
+  const { startCall, showResultSheet, setShowResultSheet, submitCallResult, currentPhone, metadata } = usePhoneCallFlow();
+
+  const calltoCustomer = (phone: string, ticketData: any) => {
+    if (!phone) return;
+    startCall(phone, ticketData);
+  }
+
+  const handlerCall = async (result: string) => {
+    const sessionstr = localStorage.getItem("session")
+    const session = JSON.parse(sessionstr || "{}")
+    
+    try {
+      const { error: callCustomerError } = await supabase.from("call_customer").insert({
+        booking_id: metadata?.booking_id,
+        call_time: moment().format(),
+        user_id: session?.user?.id,
+        result: result,
+        phone_number: currentPhone,
+        ticket_number: metadata?.ticket_number
+      });
+
+      if (callCustomerError) {
+        console.error("Error saving call log:", callCustomerError);
+      } else {
+        iontoast({
+          message: "บันทึกการโทรสำเร็จ",
+          duration: 2000,
+          color: "success",
+          position: "top"
+        });
+      }
+    } catch (err) {
+      console.error("Unexpected error in handlerCall:", err);
+    }
+  }
+
+  const checkInSeat = async (ticket: any) => {
+    if (!ticket) return;
+    await present({ message: 'กำลังบันทึกข้อมูล...' });
+    const checkedAt = moment().format();
+    try {
+      const { error } = await supabase
+        .from('tickets')
+        .update({ checked_in_at: checkedAt })
+        .eq('id', ticket.id);
+
+      if (error) {
+        console.error('Error checking in ticket:', error);
+        iontoast({ message: 'เช็คอินไม่สำเร็จ', color: 'danger', duration: 2000 });
+        return;
+      }
+
+      setBooking((prev: any) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          tickets: prev.tickets.map((t: any) => t.id === ticket.id ? { ...t, checked_in_at: checkedAt } : t)
+        };
+      });
+
+      iontoast({ message: 'เช็คอินสำเร็จ', color: 'success', duration: 2000 });
+    } catch (err) {
+      console.error('Unexpected error during check-in:', err);
+    } finally {
+      dismiss();
+    }
+  }
+
+  const checkInAll = async () => {
+    if (!booking?.tickets) return;
+    await present({ message: 'กำลังเช็คอินผู้โดยสารทั้งหมด...' });
+    const checkedAt = moment().format();
+    const ticketIds = booking.tickets.map((t: any) => t.id);
+
+    try {
+      const { error } = await supabase
+        .from('tickets')
+        .update({ checked_in_at: checkedAt })
+        .in('id', ticketIds);
+
+      if (error) {
+        console.error('Error checking in all tickets:', error);
+        return;
+      }
+
+      setBooking((prev: any) => ({
+        ...prev,
+        tickets: prev.tickets.map((t: any) => ({ ...t, checked_in_at: checkedAt }))
+      }));
+
+      iontoast({ message: 'เช็คอินผู้โดยสารทั้งหมดแล้ว', color: 'success', duration: 2000 });
+    } catch (err) {
+      console.error('Unexpected error in checkInAll:', err);
+    } finally {
+      dismiss();
+    }
+  }
 
   const actionPassenger = (p: any) => {
     actionSheet({
       header: `ที่นั่ง ${p.seat_number} - ${p.passenger_name}`,
       buttons: [
-        { text: "โทรติดต่อผู้โดยสาร", icon: callOutline, handler: () => { window.open(`tel:${p.passenger_phone}`) } },
-        { text: "ส่งข้อความถึงผู้โดยสาร", icon: chatbubbleEllipses, handler: () => { window.open(`sms:${p.passenger_phonephone}`) } },
-        { text: "เช็คอินผู้โดยสาร", icon: checkmarkCircleOutline, handler: () => { } },
+        { 
+          text: "โทรติดต่อผู้โดยสาร", 
+          icon: callOutline, 
+          handler: () => { 
+            calltoCustomer(p.passenger_phone, p);
+          } 
+        },
+        { 
+          text: p.checked_in_at ? "เช็คอินแล้ว" : "เช็คอินผู้โดยสาร", 
+          icon: checkmarkCircleOutline, 
+          disabled: !!p.checked_in_at,
+          handler: () => { checkInSeat(p) } 
+        },
         { text: "ยกเลิก", role: "cancel" }
       ]
     })
@@ -56,6 +144,7 @@ const TicketDetail: React.FC = () => {
 
   useEffect(() => {
     const conf = async () => {
+      await present({ message: 'กำลังโหลดข้อมูล...' });
       try {
         console.log("bookingReference paaram id: ", id)
         const { data: booking, error: bookingError } = await supabase.from('bookings')
@@ -121,6 +210,8 @@ const TicketDetail: React.FC = () => {
             }
           ]
         })
+      } finally {
+        dismiss();
       }
     }
     conf()
@@ -232,7 +323,7 @@ const TicketDetail: React.FC = () => {
                 borderWidth: "1px", borderStyle: "dashed", borderColor: "var(--ion-color-primary)"
               }}
               onClick={() => {
-                window.open(`tel:${booking?.phone}`, '_system');
+                calltoCustomer(booking?.phone, booking?.tickets?.[0]);
               }}
             >
               <IonText color={"primary"} > โทรติดต่อผู้โดยสาร: {booking?.phone}</IonText>
@@ -262,6 +353,8 @@ const TicketDetail: React.FC = () => {
 
           <div className='bottom-div' >
             <IonButton expand='block' mode='ios' className=" text-light rounded-4xl" style={{ color: "#FFF" }}
+              onClick={checkInAll}
+              disabled={booking?.tickets.every((t: any) => !!t.checked_in_at)}
             >
               เช็คอินผู้โดยสารทั้งหมด
             </IonButton>
@@ -271,6 +364,42 @@ const TicketDetail: React.FC = () => {
 
 
       </IonContent>
+      <IonActionSheet
+        isOpen={showResultSheet}
+        onDidDismiss={() => setShowResultSheet(false)}
+        header={`สรุปผลการติดต่อ (${currentPhone})`}
+        subHeader="กรุณาเลือกผลการสนทนาที่เกิดขึ้น"
+        buttons={[
+          {
+            text: 'สำเร็จ (Successful)',
+            icon: thumbsUpOutline,
+            handler: () => {
+              handlerCall("successful");
+              submitCallResult('successful');
+            },
+          },
+          {
+            text: 'ไม่มีผู้รับสาย (No response)',
+            icon: helpCircleOutline,
+            handler: () => {
+              handlerCall("no_reponse");
+              submitCallResult('no response');
+            },
+          },
+          {
+            text: 'ลูกค้าปฏิเสธ (Customer deny)',
+            icon: thumbsDownOutline,
+            handler: () => {
+              handlerCall("customer_deny");
+              submitCallResult('customer deny');
+            },
+          },
+          {
+            text: 'บันทึกภายหลัง',
+            role: 'cancel',
+          },
+        ]}
+      />
     </IonPage>
   );
 };

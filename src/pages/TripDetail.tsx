@@ -53,27 +53,20 @@ const TripDetail: React.FC = () => {
       }
       console.log("busStops ", busStops);
       for (const bsp of busStops) {
-        let passengerOnboard = 0;
-        let passengerOffboard = 0;
-        for (const booking of dataBooking) {
-          if (booking.pickup_stop === bsp.name) {
-            const isonboard = dataBooking.filter((b) => b.pickup_stop === bsp.name);
-            if (isonboard) {
-              console.log(bsp.name + " isonboard ", isonboard);
-              passengerOnboard += isonboard.length
-            }
-          }
-          if (booking.dropoff_stop === bsp.name) {
-            const isoffboard = dataBooking.filter((b) => b.dropoff_stop === bsp.name);
+        // Find tickets where the associated booking has this stop as pickup
+        const onBoardTickets = dataTicket.filter(t => {
+          const booking = dataBooking.find(b => b.id === t.booking_id);
+          return booking && booking.pickup_stop === bsp.name;
+        });
 
-            if (isoffboard) {
-              console.log(bsp.name + " isoffboard ", isoffboard);
-              passengerOffboard += isoffboard.length
-            }
-          }
-        }
-        bsp.passengerOnboard = passengerOnboard;
-        bsp.passengerOffboard = passengerOffboard;
+        // Find tickets where the associated booking has this stop as dropoff
+        const offBoardTickets = dataTicket.filter(t => {
+          const booking = dataBooking.find(b => b.id === t.booking_id);
+          return booking && booking.dropoff_stop === bsp.name;
+        });
+
+        bsp.passengerOnboard = onBoardTickets.length;
+        bsp.passengerOffboard = offBoardTickets.length;
       }
       data.bus_stops = busStops
 
@@ -185,7 +178,7 @@ const TripDetail: React.FC = () => {
               </BouceAnimation>
             </div>
 
-            <BouceAnimation className=" card-stations "
+            <BouceAnimation className=" card-stations  bg-white"
               duration={0.4} delay={0.5}  >
               <IonAccordionGroup className=' ion-margin  bg-white' value={stationacc}  >
                 {trip.bus_stops?.map((station) => (

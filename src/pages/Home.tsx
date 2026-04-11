@@ -1,4 +1,4 @@
-import { IonButton, IonChip, IonContent, IonHeader, IonLabel, IonList, IonPage, IonSearchbar, IonText, IonToolbar } from '@ionic/react';
+import { IonButton, IonChip, IonContent, IonHeader, IonLabel, IonList, IonPage, IonSearchbar, IonText, IonToolbar, IonLoading, IonSegment, IonSegmentButton } from '@ionic/react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faQrcode } from '@fortawesome/free-solid-svg-icons'
@@ -6,7 +6,7 @@ import { faClock } from '@fortawesome/free-regular-svg-icons'
 import { useHistory } from 'react-router-dom';
 
 import './css/Home.css';
-import moment from 'moment'; 
+import moment from 'moment';
 import { BouceAnimation } from '../components/Animations';
 import { supabase } from '../supabase/supabase';
 moment.locale('th'); // set Thai locale for date formatting
@@ -29,35 +29,51 @@ const Home: React.FC = () => {
   const [elapsed, setElapsed] = useState(0); // seconds
   const startRef = useRef<number | null>(null);
   const intervalRef = useRef<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [segment, setSegment] = useState<'active' | 'ended'>('active');
 
   const getDriverTrips = async () => {
-    const { data, error } = await supabase.from('trips')
-      .select('*, route_id(*)')
-      .gte('date', moment().utc().startOf("day"))
-    if (error) {
-      console.log(error);
-    }
-    if (data) {
-      let tripid = data.map((trip: Trip) => trip.id)
-      const { data: seatData, error: seatError } = await supabase.from('seats')
-        .select('*')
-        .in('trip_id', tripid)
-        .order('id', { ascending: false })
-
-      console.log("data ", data);
-      for (const trip of data) {
-        if (seatData) {
-          let seats = seatData.filter((seat: any) => seat.trip_id === trip.id)
-          trip.seatBooked = seats.length;
-        } else {
-          trip.seatBooked = 0;
-        }
-        if (seatError) {
-          console.log(seatError);
-        }
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.from('trips')
+        .select('*, route_id(*)')
+        .gte('date', moment().utc().startOf("day"))
+      if (error) {
+        console.log(error);
       }
+      if (data) {
+        console.log("data ", data)
+        let tripid = data.map((trip: Trip) => trip.id)
+        const { data: seatData, error: seatError } = await supabase.from('seats')
+          .select('*')
+          .in('trip_id', tripid)
+          .order('id', { ascending: false })
 
-      setTrips(data);
+        for (const trip of data) {
+          if (seatData) {
+            let seats = seatData.filter((seat: any) => seat.trip_id === trip.id)
+            trip.seatBooked = seats.length;
+          } else {
+            trip.seatBooked = 0;
+          }
+          if (seatError) {
+            console.log(seatError);
+          }
+        }
+        // --- Sort by Date and then Departure Time ---
+        data.sort((a, b) => {
+          if (a.date !== b.date) {
+            return a.date.localeCompare(b.date);
+          }
+          return a.departure_time.localeCompare(b.departure_time);
+        });
+
+        setTrips(data);
+      }
+    } catch (error) {
+      console.error("Error in getDriverTrips:", error);
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -188,34 +204,72 @@ const Home: React.FC = () => {
             placeholder="ค้นหาเที่ยวรถ..."
             className='ion-no-padding search-trip'
             value={query}
-          // onIonInput={(e: any) => searchMockupTrip(e.detail?.value ?? '')}
+            onIonInput={(e: any) => setQuery(e.detail?.value ?? '')}
           />
           <br />
+          <IonSegment mode='ios' value={segment} onIonChange={(e) => setSegment(e.detail.value as any)} className="mb-4">
+            <IonSegmentButton value="active">
+              <IonLabel>เที่ยวปัจจุบัน</IonLabel>
+            </IonSegmentButton>
+            <IonSegmentButton value="ended">
+              <IonLabel>สิ้นสุดแล้ว</IonLabel>
+            </IonSegmentButton>
+          </IonSegment>
+
           {/* <IonList color='transparent'> */}
           <IonToolbar color={"transparent"}>
             <IonText className="text-lg font-semibold" slot='start' color={"dark"} >
               <strong>เที่ยวรถ</strong>
             </IonText>
-            <IonText className="text-sm  " color={"primary"} slot='end'>ทั้งหมด </IonText>
+            {/* <IonText className="text-sm  " color={"primary"} slot='end'>ทั้งหมด </IonText> */}
           </IonToolbar>
-          {trips.map((trip, index) => (
-            <BouceAnimation duration={(index + 2) / 10} className="card-executive" key={trip.id}>
-              <CardTrip
-                title={`${trip.route_id?.origin} - ${trip.route_id?.destination}`}
-                time={trip.departure_time}
-                arrive={trip.arrival_time}
-                disabledSeat={trip.total_seats - trip.available_seats}
-                tripdate={trip.date}
-                passengerOnboard={trip.total_seats - trip.available_seats}
-                totalPassenger={trip.total_seats}
-                isOnBoard={moment(`${trip.date} ${trip?.departure_time}`).isBefore(moment())}
-                select={() => history.push(`/trip/${trip.id}`)}
-              />
-            </BouceAnimation>
-          ))}
+          {tripsFilter(trips).filter(trip => {
+            const now = moment();
+            const departure = moment(`${trip.date} ${trip.departure_time}`);
+            let arrival = moment(`${trip.date} ${trip.arrival_time}`);
+            if (arrival.isBefore(departure)) arrival.add(1, 'day');
+
+            const isEnded = now.isAfter(arrival);
+            return segment === 'active' ? !isEnded : isEnded;
+          }).map((trip, index) => {
+            const now = moment();
+            const departure = moment(`${trip.date} ${trip.departure_time}`);
+            let arrival = moment(`${trip.date} ${trip.arrival_time}`);
+
+            // Handle overnight trips (if arrival is earlier than departure, it's next day)
+            if (arrival.isBefore(departure)) {
+              arrival.add(1, 'day');
+            }
+
+            const isStarted = now.isAfter(departure);
+            const isEnded = now.isAfter(arrival);
+            const isOnBoard = isStarted && !isEnded;
+
+            return (
+              <BouceAnimation duration={(index + 2) / 10} className="card-executive" key={trip.id}>
+                <CardTrip
+                  title={`${trip.route_id?.origin} - ${trip.route_id?.destination}`}
+                  time={trip.departure_time}
+                  arrive={trip.arrival_time}
+                  disabledSeat={trip.total_seats - trip.available_seats}
+                  tripdate={trip.date}
+                  passengerOnboard={trip.total_seats - trip.available_seats}
+                  totalPassenger={trip.total_seats}
+                  isOnBoard={isOnBoard}
+                  isEnded={isEnded}
+                  select={() => history.push(`/trip/${trip.id}`)}
+                />
+              </BouceAnimation>
+            );
+          })}
           {/* </IonList> */}
         </div>
       </IonContent>
+      <IonLoading
+        isOpen={isLoading}
+        onDidDismiss={() => setIsLoading(false)}
+        message="กำลังโหลดข้อมูลเที่ยวรถ..."
+      />
     </IonPage>
   );
 };
@@ -231,10 +285,11 @@ interface CardTripProps {
   passengerOnboard: number;
   totalPassenger?: number;
   isOnBoard?: boolean;
+  isEnded?: boolean;
   select(): void;
 }
 
-const CardTrip: React.FC<CardTripProps> = ({ title, time, arrive, disabledSeat, tripdate, passengerOnboard, totalPassenger, isOnBoard, select }) => {
+const CardTrip: React.FC<CardTripProps> = ({ title, time, arrive, disabledSeat, tripdate, passengerOnboard, totalPassenger, isOnBoard, isEnded, select }) => {
   return (
     <div className="card-trip ion-margin-bottom  bg-white shadow  border-1 border-solid  " onClick={() => select()} >
       <div className="grid grid-cols-3 p-4">
@@ -246,14 +301,14 @@ const CardTrip: React.FC<CardTripProps> = ({ title, time, arrive, disabledSeat, 
           <IonLabel style={{ fontSize: "medium" }}>
             <FontAwesomeIcon icon={faClock} /> &nbsp;
             <IonText>{time} - {arrive}</IonText>
-            <p className="text-xs text-gray-400 mt-4" style={{marginTop:".5rem"}} >
+            <p className="text-xs text-gray-400 mt-4" style={{ marginTop: ".5rem" }} >
               {tripdate && moment(tripdate).format('DD MMMM YYYY')}
             </p>
           </IonLabel>
         </div>
         <div className='text-right'>
-          <IonChip color={isOnBoard ? "success" : "warning"} className="ion-margin-bottom" >
-            {isOnBoard ? "ถึงเที่ยว" : "ยังไม่ถึงเที่ยว"}
+          <IonChip color={isEnded ? "medium" : isOnBoard ? "success" : "warning"} className="ion-margin-bottom" >
+            {isEnded ? "สิ้นสุด" : isOnBoard ? "กำลังเดินทาง" : "ยังไม่ถึงเที่ยว"}
           </IonChip>
           <p className='text-gray-400' style={{ fontSize: ".7em" }}>ผู้โดยสาร: ({passengerOnboard}/{totalPassenger}) <br />
             Disabled: {disabledSeat || 0}</p>

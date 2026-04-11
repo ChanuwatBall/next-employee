@@ -229,3 +229,134 @@
     justify-content: center;
     align-items: center;
 }
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .bg-slate-50 {
+        background-color: #0f172a !important; /* Slate 900 */
+    }
+
+    .planchair-header h2 {
+        color: #f1f5f9 !important;
+    }
+
+    .planchair-header p {
+        color: #94a3b8 !important;
+    }
+
+    .planchair-legend {
+        background: #1e293b !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    }
+
+    .legend-item {
+        color: #cbd5e1 !important;
+    }
+
+    .legend-box.available {
+        background: #1e293b;
+        border-color: rgba(var(--ion-color-primary-rgb), 0.4);
+    }
+
+    .bus-grid-card {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    .bus-windshield, .bus-bumper {
+        background: #475569 !important;
+    }
+
+    .seat-available {
+        background: #334155 !important;
+        border-color: rgba(var(--ion-color-primary-rgb), 0.3) !important;
+        color: #f8fafc !important;
+    }
+
+    .seat-booked {
+        background: #1e293b !important;
+        border-color: #475569 !important;
+        color: #94a3b8 !important;
+    }
+
+    .special-cell {
+        background: #334155 !important;
+        border-color: #475569 !important;
+        color: #64748b !important;
+    }
+
+    .special-cell .driver-icon {
+        color: #94a3b8 !important;
+    }
+
+    ion-modal ion-content {
+        --background: #0f172a !important;
+    }
+
+    .modal-header-text {
+        color: #f1f5f9 !important;
+    }
+
+    .text-slate-800 {
+        color: #f1f5f9 !important;
+    }
+
+    .text-slate-500, .text-slate-400 {
+        color: #94a3b8 !important;
+    }
+
+    .bg-slate-50, .bg-slate-100 {
+        background-color: #1e293b !important;
+    }
+}
+
+.modal-card-box {
+    background-color: #fafafa;
+    width: 90%;
+    border-radius: 1rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.modal-inner-card {
+    background-color: #f8fafc;
+    border-radius: 1rem;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.modal-seat-icon-box {
+    width: 7rem;
+    height: 7rem;
+    border: 1px solid #b8b8b8;
+    border-radius: 1rem;
+}
+
+.call-record-item {
+    border-bottom: 1px solid #eee;
+    padding: 1rem 0;
+}
+
+.call-record-item:last-child {
+    border-bottom: none;
+}
+
+@media (prefers-color-scheme: dark) {
+    .modal-card-box {
+        background-color: #1e293b;
+    }
+
+    .modal-inner-card {
+        background-color: #0f172a;
+    }
+
+    .modal-seat-icon-box {
+        background-color: #1e293b;
+        border-color: #334155;
+    }
+
+    .call-record-item {
+        border-color: #334155;
+    }
+}
