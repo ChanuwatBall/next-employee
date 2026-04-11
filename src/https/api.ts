@@ -14,4 +14,17 @@ export const getTripSeats = async (tripId: string) => {
   return response.data;
 };
 
+export const getBookingDetail = async (id: string) => {
+  // curl '/api/bookings/{id}' \
+  // --header 'Authorization: Bearer YOUR_SECRET_TOKEN'
+  const userstr = localStorage.getItem("session")
+  const session = userstr ? JSON.parse(userstr) : null;
+  const response = await api.get(`/bookings/${id}`, {
+    headers: {
+      Authorization: `Bearer ${session?.access_token}`
+    }
+  })
+  return response;
+}
 export default api;
+

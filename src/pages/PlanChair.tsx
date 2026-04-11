@@ -215,6 +215,7 @@ const PlanChair: React.FC = () => {
                         floor: s.floor,
                         ticket_id: null // Will be populated if needed when clicking
                     }));
+                    console.log("mappedSeats ", mappedSeats)
                     setSeats(mappedSeats);
                 }
             }
@@ -242,6 +243,32 @@ const PlanChair: React.FC = () => {
                     return;
                 }
                 console.log("Seat detail:", data);
+
+                const { data: dataBooking, error: bookingError } = await supabase.from("bookings")
+                    .select("*")
+                    .eq("trip_id", id)
+                    .eq("status", "confirmed")
+                    .eq("payment_status", "paid")
+                let bookids: any[] = [];
+                if (dataBooking) {
+                    console.log("data booking ", dataBooking)
+                    bookids = dataBooking?.map((b: any) => b.id);
+                }
+                const { data: dataTicket, error: ticketError } = await supabase.from("tickets")
+                    .select("*")
+                    .in("booking_id", bookids)
+                    .eq("seat_number", data.seat_number)
+                    .eq("status", "active")
+                    .single();
+                if (ticketError) {
+                    console.error("Error fetching ticket:", ticketError);
+                    return;
+                }
+                data.ticket_id = dataTicket;
+
+                console.log("Seat detail ticket:", data);
+
+
                 setSelectedSeatData(data as SeatDetail);
                 setShowSeatModal(true);
             } catch (error) {
@@ -433,7 +460,7 @@ const PlanChair: React.FC = () => {
             <IonModal
                 isOpen={showSeatModal}
                 initialBreakpoint={0.8}
-                breakpoints={[0, 0.8]}
+                breakpoints={[0, 0.8, 0.9]}
                 onDidDismiss={() => { setShowSeatModal(false); setSelectedSeatData(null); }}
             >
                 <IonContent scrollY>

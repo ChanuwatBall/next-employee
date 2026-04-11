@@ -9,6 +9,7 @@ import { BouceAnimation } from '../components/Animations';
 import { supabase } from '../supabase/supabase';
 
 import { Trip } from '../types/trip';
+import { getTripSeats } from '../https/api';
 
 const TripDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,23 +26,28 @@ const TripDetail: React.FC = () => {
       console.log(error);
     }
     if (data) {
-      const { data: dataBooking, error: bookingError } = await supabase.from('bookings').select('*')
+      const { data: dataBooking, error: bookingError } = await supabase.from('bookings')
+        .select('*')
         .eq('trip_id', id)
+        .eq('status', "confirmed")
       if (bookingError) {
         throw "dataBooking err " + bookingError
       }
       console.log("dataBooking ", dataBooking);
+      let bkid = dataBooking.map((b) => b.id)
 
-      
-
-      // const {data:dataSeats , error:seatsError} = await supabase.from('seats').select('*').eq('trip_id', id)
-      // if(seatsError){
-      //   throw seatsError
-      // }
+      const { data: dataTicket, error: ticketError } = await supabase.from('tickets')
+        .select('*')
+        .in('booking_id', bkid)
+        .eq("status", "active")
+      if (ticketError) {
+        throw ticketError
+      }
+      console.log("dataTicket ", dataTicket);
 
       const { data: busStops, error: busStopsError } = await supabase.from('bus_stops')
         .select('*')
-      .eq('route_id', data.route_id.id)
+        .eq('route_id', data.route_id.id)
       if (busStopsError) {
         throw busStopsError
       }
