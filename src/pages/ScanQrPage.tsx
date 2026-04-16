@@ -43,16 +43,16 @@ const ScanQrPage: React.FC = () => {
   const scannedOnce = useRef(false);
   const listenerRef = useRef<any>(null);
   const history = useHistory();
-  const [ionalert , dimissIonAlert] = useIonAlert();
+  const [ionalert, dimissIonAlert] = useIonAlert();
 
   const stop = async () => {
     try {
       await BarcodeScanner.stopScan();
-    } catch {}
+    } catch { }
     if (listenerRef.current) {
       try {
         listenerRef.current.remove();
-      } catch {}
+      } catch { }
       listenerRef.current = null;
     }
     document.querySelector('body')?.classList.remove('barcode-scanner-active');
@@ -60,16 +60,15 @@ const ScanQrPage: React.FC = () => {
     setScanning(false);
   };
 
-  const getResult = async (val:any) => {
-     const valueQrCode = val.split("#")
-    if(valueQrCode[0].indexOf("nex-ticket.com") > -1){
-      const ticketId = valueQrCode[1];
+  const getResult = async (val: any) => {
+    const valueQrCode = val.split("#")
+    if (valueQrCode[0].indexOf("nex-ticket.com") > -1) {
+      const bookingReference = valueQrCode[1];
       return {
-        result: true ,
-        ticketId:  ticketId ,
-        ticketUrl: `https://nex-ticket.com/ticket/${ticketId}`
+        result: true,
+        ticketId: bookingReference
       }
-    }else{
+    } else {
       return {
         result: false
       }
@@ -99,17 +98,17 @@ const ScanQrPage: React.FC = () => {
       if (!code) return;
       scannedOnce.current = true;
       const res = await getResult(code);
-      if(res.result){
+      if (res.result) {
         history.push(`/ticket/${res.ticketId}`);
         await stop();
-      }else{ 
+      } else {
         ionalert({
           header: 'ไม่พบข้อมูลตั๋ว',
           message: 'QR ที่สแกนไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง',
           buttons: [
             {
               text: 'ตกลง',
-              role:"cancel",
+              role: "cancel",
               handler: () => {
                 dimissIonAlert();
               }
@@ -135,11 +134,11 @@ const ScanQrPage: React.FC = () => {
       <IonHeader mode="md" className={scanning ? "scanning ion-no-border" : "ion-no-border"}>
         <IonToolbar className={scanning ? "scanning" : ""}>
           <IonButtons slot="start">
-             <IonButton color="dark" onClick={() =>{ history.goBack()}} >
+            <IonButton color="dark" onClick={() => { history.goBack() }} >
               <IonIcon icon={arrowBackCircleOutline} /> &nbsp;&nbsp;&nbsp;&nbsp;
               <IonText className="text-lg">สแกน QR ตั๋ว</IonText>
-             </IonButton>
-          </IonButtons> 
+            </IonButton>
+          </IonButtons>
         </IonToolbar>
       </IonHeader>
 
@@ -147,7 +146,7 @@ const ScanQrPage: React.FC = () => {
         {scanning && (
           <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
             <div
-              className="scan-frame" 
+              className="scan-frame"
             />
           </div>
         )}

@@ -9,6 +9,7 @@ import { BouceAnimation } from '../components/Animations';
 import { supabase } from '../supabase/supabase';
 
 import { Trip } from '../types/trip';
+import { getTripSeats } from '../https/api';
 
 const TripDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,49 +26,47 @@ const TripDetail: React.FC = () => {
       console.log(error);
     }
     if (data) {
-      const { data: dataBooking, error: bookingError } = await supabase.from('bookings').select('*')
+      const { data: dataBooking, error: bookingError } = await supabase.from('bookings')
+        .select('*')
         .eq('trip_id', id)
+        .eq('status', "confirmed")
       if (bookingError) {
         throw "dataBooking err " + bookingError
       }
       console.log("dataBooking ", dataBooking);
+      let bkid = dataBooking.map((b) => b.id)
 
-      
-
-      // const {data:dataSeats , error:seatsError} = await supabase.from('seats').select('*').eq('trip_id', id)
-      // if(seatsError){
-      //   throw seatsError
-      // }
+      const { data: dataTicket, error: ticketError } = await supabase.from('tickets')
+        .select('*')
+        .in('booking_id', bkid)
+        .eq("status", "active")
+      if (ticketError) {
+        throw ticketError
+      }
+      console.log("dataTicket ", dataTicket);
 
       const { data: busStops, error: busStopsError } = await supabase.from('bus_stops')
         .select('*')
-      .eq('route_id', data.route_id.id)
+        .eq('route_id', data.route_id.id)
       if (busStopsError) {
         throw busStopsError
       }
       console.log("busStops ", busStops);
       for (const bsp of busStops) {
-        let passengerOnboard = 0;
-        let passengerOffboard = 0;
-        for (const booking of dataBooking) {
-          if (booking.pickup_stop === bsp.name) {
-            const isonboard = dataBooking.filter((b) => b.pickup_stop === bsp.name);
-            if (isonboard) {
-              console.log(bsp.name + " isonboard ", isonboard);
-              passengerOnboard += isonboard.length
-            }
-          }
-          if (booking.dropoff_stop === bsp.name) {
-            const isoffboard = dataBooking.filter((b) => b.dropoff_stop === bsp.name);
+        // Find tickets where the associated booking has this stop as pickup
+        const onBoardTickets = dataTicket.filter(t => {
+          const booking = dataBooking.find(b => b.id === t.booking_id);
+          return booking && booking.pickup_stop === bsp.name;
+        });
 
-            if (isoffboard) {
-              console.log(bsp.name + " isoffboard ", isoffboard);
-              passengerOffboard += isoffboard.length
-            }
-          }
-        }
-        bsp.passengerOnboard = passengerOnboard;
-        bsp.passengerOffboard = passengerOffboard;
+        // Find tickets where the associated booking has this stop as dropoff
+        const offBoardTickets = dataTicket.filter(t => {
+          const booking = dataBooking.find(b => b.id === t.booking_id);
+          return booking && booking.dropoff_stop === bsp.name;
+        });
+
+        bsp.passengerOnboard = onBoardTickets.length;
+        bsp.passengerOffboard = offBoardTickets.length;
       }
       data.bus_stops = busStops
 
@@ -179,7 +178,7 @@ const TripDetail: React.FC = () => {
               </BouceAnimation>
             </div>
 
-            <BouceAnimation className=" card-stations "
+            <BouceAnimation className=" card-stations  bg-white"
               duration={0.4} delay={0.5}  >
               <IonAccordionGroup className=' ion-margin  bg-white' value={stationacc}  >
                 {trip.bus_stops?.map((station) => (

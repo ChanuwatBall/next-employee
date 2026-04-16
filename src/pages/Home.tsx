@@ -1,4 +1,4 @@
-import { IonChip, IonContent, IonHeader, IonLabel, IonPage, IonSearchbar, IonText, IonToolbar } from '@ionic/react';
+import { IonChip, IonContent, IonHeader, IonLabel, IonLoading, IonPage, IonSearchbar, IonSegment, IonSegmentButton, IonText, IonToolbar } from '@ionic/react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faQrcode } from '@fortawesome/free-solid-svg-icons'
@@ -6,7 +6,7 @@ import { faClock } from '@fortawesome/free-regular-svg-icons'
 import { useHistory } from 'react-router-dom';
 
 import './css/Home.css';
-import moment from 'moment'; 
+import moment from 'moment';
 import { BouceAnimation } from '../components/Animations';
 import { supabase } from '../supabase/supabase';
 moment.locale('th'); // set Thai locale for date formatting
@@ -17,6 +17,8 @@ const Home: React.FC = () => {
   const history = useHistory();
   const [query, setQuery] = useState('');
   const [trips, setTrips] = useState<Trip[]>([]);
+  const [segment, setSegment] = useState<any>('active');
+  const [isLoading, setIsLoading] = useState(false);
 
   const getdriverTrips = async () => {
     // const { data, error } = await supabase.from('trips')
@@ -120,12 +122,21 @@ const Home: React.FC = () => {
             onIonInput={(e: any) => setQuery(e.detail?.value ?? '')}
           />
           <br />
+          <IonSegment mode='ios' value={segment} onIonChange={(e) => setSegment(e.detail.value as any)} className="mb-4">
+            <IonSegmentButton value="active">
+              <IonLabel>เที่ยวปัจจุบัน</IonLabel>
+            </IonSegmentButton>
+            <IonSegmentButton value="ended">
+              <IonLabel>สิ้นสุดแล้ว</IonLabel>
+            </IonSegmentButton>
+          </IonSegment>
+
           {/* <IonList color='transparent'> */}
           <IonToolbar color={"transparent"}>
             <IonText className="text-lg font-semibold" slot='start' color={"dark"} >
               <strong>เที่ยวรถ</strong>
             </IonText>
-            <IonText className="text-sm  " color={"primary"} slot='end'>ทั้งหมด </IonText>
+            {/* <IonText className="text-sm  " color={"primary"} slot='end'>ทั้งหมด </IonText> */}
           </IonToolbar>
           {trips.map((trip, index) => (
             <BouceAnimation duration={(index + 2) / 10} className="card-executive" key={trip.tripId}>
@@ -145,6 +156,11 @@ const Home: React.FC = () => {
           {/* </IonList> */}
         </div>
       </IonContent>
+      <IonLoading
+        isOpen={isLoading}
+        onDidDismiss={() => setIsLoading(false)}
+        message="กำลังโหลดข้อมูลเที่ยวรถ..."
+      />
     </IonPage>
   );
 };
@@ -160,10 +176,11 @@ interface CardTripProps {
   passengerOnboard: number;
   totalPassenger?: number;
   isOnBoard?: boolean;
+  isEnded?: boolean;
   select(): void;
 }
 
-const CardTrip: React.FC<CardTripProps> = ({ title, time, arrive, disabledSeat, tripdate, passengerOnboard, totalPassenger, isOnBoard, select }) => {
+const CardTrip: React.FC<CardTripProps> = ({ title, time, arrive, disabledSeat, tripdate, passengerOnboard, totalPassenger, isOnBoard, isEnded, select }) => {
   return (
     <div className="card-trip ion-margin-bottom  bg-white shadow  border-1 border-solid  " onClick={() => select()} >
       <div className="grid grid-cols-3 p-4">
@@ -175,14 +192,14 @@ const CardTrip: React.FC<CardTripProps> = ({ title, time, arrive, disabledSeat, 
           <IonLabel style={{ fontSize: "medium" }}>
             <FontAwesomeIcon icon={faClock} /> &nbsp;
             <IonText>{time} - {arrive}</IonText>
-            <p className="text-xs text-gray-400 mt-4" style={{marginTop:".5rem"}} >
+            <p className="text-xs text-gray-400 mt-4" style={{ marginTop: ".5rem" }} >
               {tripdate && moment(tripdate).format('DD MMMM YYYY')}
             </p>
           </IonLabel>
         </div>
         <div className='text-right'>
-          <IonChip color={isOnBoard ? "success" : "warning"} className="ion-margin-bottom" >
-            {isOnBoard ? "ถึงเที่ยว" : "ยังไม่ถึงเที่ยว"}
+          <IonChip color={isEnded ? "medium" : isOnBoard ? "success" : "warning"} className="ion-margin-bottom" >
+            {isEnded ? "สิ้นสุด" : isOnBoard ? "กำลังเดินทาง" : "ยังไม่ถึงเที่ยว"}
           </IonChip>
           <p className='text-gray-400' style={{ fontSize: ".7em" }}>ผู้โดยสาร: ({passengerOnboard}/{totalPassenger}) <br />
             Disabled: {disabledSeat || 0}</p>
