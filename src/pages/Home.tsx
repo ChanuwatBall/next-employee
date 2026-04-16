@@ -1,5 +1,5 @@
-import { IonButton, IonChip, IonContent, IonHeader, IonLabel, IonList, IonPage, IonSearchbar, IonText, IonToolbar } from '@ionic/react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { IonChip, IonContent, IonHeader, IonLabel, IonPage, IonSearchbar, IonText, IonToolbar } from '@ionic/react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faQrcode } from '@fortawesome/free-solid-svg-icons'
 import { faClock } from '@fortawesome/free-regular-svg-icons'
@@ -11,109 +11,52 @@ import { BouceAnimation } from '../components/Animations';
 import { supabase } from '../supabase/supabase';
 moment.locale('th'); // set Thai locale for date formatting
 
-const mockTrips = [
-  { id: '1', title: 'โคราช - กทม.', time: '07:20', arrive: '09:40', tripdate: "2024-06-20", passsengerOnboard: 25, totalPassenger: 37, disabledSeat: 3, isOnBoard: true },
-  { id: '2', title: 'กทม. - โคราช', time: '10:30', arrive: '18:00', tripdate: "2024-06-20", passsengerOnboard: 30, totalPassenger: 40, disabledSeat: 0, isOnBoard: false },
-  { id: '3', title: 'โคราช - กทม.', time: '12:00', arrive: '14:20', tripdate: "2024-06-21", passsengerOnboard: 20, totalPassenger: 40, disabledSeat: 0, isOnBoard: false },
-  { id: '4', title: 'กทม. - โคราช', time: '15:30', arrive: '23:00', tripdate: "2024-06-21", passsengerOnboard: 35, totalPassenger: 40, disabledSeat: 0, isOnBoard: false },
-];
-
 import { Trip } from '../types/trip';
+import { getDriverTrips } from '../http/api';
 const Home: React.FC = () => {
   const history = useHistory();
   const [query, setQuery] = useState('');
   const [trips, setTrips] = useState<Trip[]>([]);
-  const [role, setRole] = useState<string | null>(null);
-  const [running, setRunning] = useState(false);
-  const [paused, setPaused] = useState(false);
-  const [elapsed, setElapsed] = useState(0); // seconds
-  const startRef = useRef<number | null>(null);
-  const intervalRef = useRef<number | null>(null);
 
-  const getDriverTrips = async () => {
-    const { data, error } = await supabase.from('trips')
-      .select('*, route_id(*)')
-      .gte('date', moment().utc().startOf("day"))
-    if (error) {
-      console.log(error);
-    }
-    if (data) {
-      let tripid = data.map((trip: Trip) => trip.id)
-      const { data: seatData, error: seatError } = await supabase.from('seats')
-        .select('*')
-        .in('trip_id', tripid)
-        .order('id', { ascending: false })
+  const getdriverTrips = async () => {
+    // const { data, error } = await supabase.from('trips')
+    //   .select('*, route_id(*)')
+    //   .gte('date', moment().utc().startOf("day"))
+    // if (error) {
+    //   console.log(error);
+    // }
+    // if (data) {
+    //   let tripid = data.map((trip: Trip) => trip.id)
+    //   const { data: seatData, error: seatError } = await supabase.from('seats')
+    //     .select('*')
+    //     .in('trip_id', tripid)
+    //     .order('id', { ascending: false })
 
-      console.log("data ", data);
-      for (const trip of data) {
-        if (seatData) {
-          let seats = seatData.filter((seat: any) => seat.trip_id === trip.id)
-          trip.seatBooked = seats.length;
-        } else {
-          trip.seatBooked = 0;
-        }
-        if (seatError) {
-          console.log(seatError);
-        }
-      }
+    //   console.log("data ", data);
+    //   for (const trip of data) {
+    //     if (seatData) {
+    //       let seats = seatData.filter((seat: any) => seat.trip_id === trip.id)
+    //       trip.seatBooked = seats.length;
+    //     } else {
+    //       trip.seatBooked = 0;
+    //     }
+    //     if (seatError) {
+    //       console.log(seatError);
+    //     }
+    //   }
 
-      setTrips(data);
-    }
+    //   setTrips(data);
+    // }
+    const token = localStorage.getItem('session') ? JSON.parse(localStorage.getItem('session') || '{}').access_token : null;
+    const tripsData:any[] = await getDriverTrips(moment().format(), token);
+    console.log("tripsData ", tripsData);
+    setTrips(tripsData);
   }
 
   useEffect(() => {
-    getDriverTrips();
-    const r = localStorage.getItem('role');
-    setRole(r);
-    const saved = localStorage.getItem('driver_elapsed');
-    if (saved) setElapsed(Number(saved) || 0);
+    getdriverTrips();
     console.log("trips ", trips);
   }, []);
-
-  useEffect(() => {
-    if (running && !paused) {
-      startRef.current = Date.now();
-      intervalRef.current = window.setInterval(() => {
-        setElapsed(prev => prev + 1);
-      }, 1000);
-    }
-    return () => {
-      if (intervalRef.current) {
-        window.clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [running, paused]);
-
-  useEffect(() => {
-    localStorage.setItem('driver_elapsed', String(elapsed));
-  }, [elapsed]);
-
-  const handleStart = () => {
-    setRunning(true);
-    setPaused(false);
-  };
-
-  const handleStop = () => {
-    if (!confirm('ยืนยันการหยุดปฏิบัติงานและบันทึกเวลา?')) return;
-    setRunning(false);
-    setPaused(false);
-    setElapsed(0);
-    localStorage.removeItem('driver_elapsed');
-  };
-
-  const handlePause = () => {
-    setPaused(p => !p);
-    if (!paused) {
-      // pausing
-      if (intervalRef.current) {
-        window.clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    } else {
-      // resuming handled by effect
-    }
-  };
 
   const hellotime = (() => {
     const hour = moment().hour();
@@ -123,34 +66,20 @@ const Home: React.FC = () => {
     return 'ตอนดึก';
   })();
 
-  // const searchMockupTrip = (q: string) => {
-  //   const v = (q || '').trim().toLowerCase();
-  //   setQuery(q);
+ 
+
+  // const tripsFilter = useCallback((trips: Trip[]) => {
+  //   const v = (query || '').trim().toLowerCase();
   //   if (!v) {
-  //     setTrips(mockTrips);
-  //     return;
+  //     return trips;
   //   }
-  //   const filtered = mockTrips.filter(t => {
-  //     const title = t.title?.toLowerCase() || '';
-  //     const time = t.time || '';
-  //     const date = t.tripdate ? moment(t.tripdate).format('DD MMMM YYYY').toLowerCase() : '';
+  //   return trips.filter(t => {
+  //     const title = t.route_id?.id.toLowerCase() || '';
+  //     const time = t.departure_time || '';
+  //     const date = t.date ? moment(t.date).format('DD MMMM YYYY').toLowerCase() : '';
   //     return title.includes(v) || time.includes(v) || date.includes(v);
   //   });
-  //   setTrips(filtered);
-  // };
-
-  const tripsFilter = useCallback((trips: Trip[]) => {
-    const v = (query || '').trim().toLowerCase();
-    if (!v) {
-      return trips;
-    }
-    return trips.filter(t => {
-      const title = t.route_id?.id.toLowerCase() || '';
-      const time = t.departure_time || '';
-      const date = t.date ? moment(t.date).format('DD MMMM YYYY').toLowerCase() : '';
-      return title.includes(v) || time.includes(v) || date.includes(v);
-    });
-  }, [query])
+  // }, [query])
 
 
   return (
@@ -188,7 +117,7 @@ const Home: React.FC = () => {
             placeholder="ค้นหาเที่ยวรถ..."
             className='ion-no-padding search-trip'
             value={query}
-          // onIonInput={(e: any) => searchMockupTrip(e.detail?.value ?? '')}
+            onIonInput={(e: any) => setQuery(e.detail?.value ?? '')}
           />
           <br />
           {/* <IonList color='transparent'> */}
@@ -199,17 +128,17 @@ const Home: React.FC = () => {
             <IonText className="text-sm  " color={"primary"} slot='end'>ทั้งหมด </IonText>
           </IonToolbar>
           {trips.map((trip, index) => (
-            <BouceAnimation duration={(index + 2) / 10} className="card-executive" key={trip.id}>
+            <BouceAnimation duration={(index + 2) / 10} className="card-executive" key={trip.tripId}>
               <CardTrip
-                title={`${trip.route_id?.origin} - ${trip.route_id?.destination}`}
-                time={trip.departure_time}
-                arrive={trip.arrival_time}
-                disabledSeat={trip.total_seats - trip.available_seats}
+                title={`${trip.origin} - ${trip.destination}`}
+                time={trip.departureTime}
+                arrive={trip.arrivalTime}
+                disabledSeat={trip.totalSeats - trip.totalPassengers}
                 tripdate={trip.date}
-                passengerOnboard={trip.total_seats - trip.available_seats}
-                totalPassenger={trip.total_seats}
-                isOnBoard={moment(`${trip.date} ${trip?.departure_time}`).isBefore(moment())}
-                select={() => history.push(`/trip/${trip.id}`)}
+                passengerOnboard={trip.totalPassengers - trip.checkedIn}
+                totalPassenger={trip.totalSeats}
+                isOnBoard={moment(`${trip.date} ${trip?.departureTime}`).isBefore(moment())}
+                select={() => history.push(`/trip/${trip.tripId}`)}
               />
             </BouceAnimation>
           ))}

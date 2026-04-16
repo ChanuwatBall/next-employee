@@ -1,9 +1,84 @@
-.signin-input{
-    border: 1px solid var(--ion-color-light-shade);
-    border-radius: 1rem;
-    margin: .5rem 0 .5rem 0;
+.form-input-sigin{
+    border-radius: 10px;
+    padding: 0rem 0 1rem 0;
+}
+
+.signin-input{ 
     padding: .3rem;
     --padding-start:.5rem;
     --padding-end:.5rem;
-    background-color: var(--ion-color-white);
+    background-color: var(--ion-color-white); 
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    border: none !important;
+}
+
+
+.signin-react-select {
+    width: 100%;
+    flex: 1;
+}
+
+.signin-item {
+    --padding-start: 0;
+    --inner-padding-end: 0;
+    --min-height: 0;
+    --background: transparent;
+}
+
+.signin-item .signin-react-select {
+    width: 100%;
+    margin-top: -0.7rem;
+    background-color: transparent !important;
+}
+
+.signin-item .input-wrapper .label-text{ 
+    margin-top: 2rem !important;
+}
+
+.signin-ion-input::part(label) {
+    color: #9ca3af;
+}
+
+/* react-select uses classNamePrefix="signin-input" so it generates signin-input__* classes */
+.signin-input__control {
+    border: none !important;
+    border-radius: 0 !important;
+    min-height: 44px !important;
+    height: 44px !important;
+    background-color: transparent!important;
+    box-shadow: none !important;
+}
+
+.signin-input__control--is-focused {
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+.signin-input__value-container {
+    height: 44px !important;
+    padding: 0 .5rem !important;
+}
+
+.signin-input__input-container {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.signin-input__indicator-separator {
+    display: none;
+}
+
+.signin-input__indicator {
+    padding: 0 8px !important;
+}
+
+.signin-input__menu {
+    z-index: 20;
+}
+
+.signin-input__menu-portal {
+    z-index: 9999;
 }

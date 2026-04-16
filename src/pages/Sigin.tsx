@@ -1,56 +1,104 @@
-import { IonButton, IonCheckbox, IonContent, IonImg, IonInput, IonInputPasswordToggle, IonItem, IonLabel, IonPage, IonSelect, IonSelectOption } from "@ionic/react";
+import { IonButton, IonContent, IonImg, IonInput, IonItem, IonLabel, IonList, IonPage } from "@ionic/react";
 import React, { useState, useEffect } from 'react';
-import "./css/Signin.css"
+import Select from 'react-select';
+import type { StylesConfig } from 'react-select';
+import "./css/Signin.css";
+import { driverLogin } from "../http/api";
 import { supabase } from "../supabase/supabase";
+import moment from "moment";
 
+interface DriverLoginResponse {
+    token?: string;
+    accessToken?: string;
+    access_token?: string;
+    driver?: unknown;
+    user?: unknown;
+    [key: string]: unknown;
+}
+
+interface SelectOption {
+    value: string;
+    label: string;
+}
+
+const selectMenuStyles: StylesConfig<SelectOption, false> = {
+    menuPortal: base => ({ ...base, zIndex: 9999 }),
+    menu: base => ({ ...base, zIndex: 9999 }),
+};
+
+const DRIVER_PHONE_OPTIONS = [
+    '0997874156',
+    '0812345678',
+    '0865552211',
+];
+  type Driver = {
+    id:  string
+    name:string
+    license_number: string
+    phone: string
+    is_active: boolean,
+    created_at: string,
+    email: string | null,
+    password_hash: string | null
+}
 const Sigin: React.FC = () => {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState("")
-    const [rememberMe, setRememberMe] = useState(false);
-    // const [role, setRole] = useState<'driver' | 'busconductor'>('driver');
+    const [phone, setPhone] = useState(DRIVER_PHONE_OPTIONS[0]);
+    const [licenseNumber, setLicenseNumber] = useState("");
+    const [drivers, setDrivers] = useState<Driver[]>([]);
+    const menuPortalTarget = typeof window !== 'undefined' ? document.body : null;
+
+    const driverOptions: SelectOption[] = drivers.map(driver => ({
+        value: driver.phone,
+        label: driver.name,
+    }));
+
+    const phoneOptions: SelectOption[] = DRIVER_PHONE_OPTIONS.map(option => ({
+        value: option,
+        label: option,
+    }));
 
     useEffect(() => {
-        const savedUsername = localStorage.getItem('savedUsername');
-        const savedPassword = localStorage.getItem('savedPassword');
-        const savedRememberMe = localStorage.getItem('rememberMe') === 'true';
+        const savedPhone = localStorage.getItem('savedDriverPhone');
+        const savedLicenseNumber = localStorage.getItem('savedLicenseNumber');
 
-        if (savedRememberMe) {
-            if (savedUsername) setUsername(savedUsername);
-            if (savedPassword) setPassword(savedPassword);
-            setRememberMe(true);
+        if (savedPhone && DRIVER_PHONE_OPTIONS.includes(savedPhone)) setPhone(savedPhone);
+        if (savedLicenseNumber) setLicenseNumber(savedLicenseNumber);
+
+        const conf=async () =>{
+            const dlist = await supabase.from('drivers').select('*').then(({ data, error }) => {
+                if (error) {
+                    console.error("Error fetching drivers:", error);
+                    return [];
+                }
+                return data;
+            });
+
+            console.log("drivers", dlist);
+            setDrivers(dlist);
         }
+        conf();
     }, []);
 
     const doLogin = async () => {
-        console.log("username ", username)
-        console.log("password ", password)
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email: username,
-            password: password,
-        })
-        if (error) {
-            console.log(error)
-        } else {
-            console.log("data ", data)
-            let role = data.user.role?.toString() || '';
+        try {
+            const body ={
+                phone: phone,
+                licenseNumber: licenseNumber
+            } 
+
+            const loginres:{token:string , driver:any} = await driverLogin(body)
+            console.log("loginres", loginres);
             localStorage.setItem('isAuthenticated', "true");
-            localStorage.setItem('username', username || '');
-            localStorage.setItem('role', role);
-            localStorage.setItem('user', JSON.stringify(data.user));
-            localStorage.setItem('session', JSON.stringify(data.session));
-
-            if (rememberMe) {
-                localStorage.setItem('savedUsername', username);
-                localStorage.setItem('savedPassword', password);
-                localStorage.setItem('rememberMe', 'true');
+            localStorage.setItem('role', 'driver');
+           if (loginres?.token) {
+                localStorage.setItem('session', JSON.stringify({ access_token: loginres?.token , expires_in: moment().add(1, 'hour').format() }));
+                window.location.href = '/home';
             } else {
-                localStorage.removeItem('savedUsername');
-                localStorage.removeItem('savedPassword');
-                localStorage.setItem('rememberMe', 'false');
+                localStorage.removeItem('session');
             }
-
-            window.location.href = '/home';
-        }
+        } catch (error) {
+            console.error("Login error:", error);
+        } 
     };
 
     return (
@@ -65,39 +113,45 @@ const Sigin: React.FC = () => {
                         <div className="logo-section w-full flex items-center" style={{ flexDirection: "column", marginBottom: "3rem" }} >
                             <IonImg src="../assets/svg/logo.svg" style={{ width: "30vw", maxWidth: "200px" }} /> <br />
                             <span className="text-sm font-semibold text-gray-800 " style={{ color: "black" }}> เข้าสู่ระบบเพื่อจัดการเที่ยวการเดินทาง</span>
-                        </div>
-                        <div className="ion-margin-top">
-                            <IonLabel style={{ color: "black" }}>อีเมลล์ หรือยูเซอร์เนม</IonLabel>
-                            <IonInput
-                                value={username}
-                                placeholder="ีuser@gmail.com"
-                                className="signin-input"
-                                mode="ios"
-                                onIonChange={e =>
-                                    setUsername(String(e.detail.value || ''))}
-                            ></IonInput>
-                        </div><br />
-                        <div >
-                            <IonLabel style={{ color: "black" }}>รหัสผ่าน</IonLabel>
-                            <IonInput
-                                value={password}
-                                type="password"
-                                placeholder="****"
-                                className="signin-input"
-                                mode="ios"
-                                onIonChange={e =>
-                                    setPassword(String(e.detail.value || ''))}
-                            >
-                                <IonInputPasswordToggle slot="end"></IonInputPasswordToggle></IonInput>
-                        </div><br />
-                        <div className="flex items-center gap-2">
-                            <IonCheckbox
-                                checked={rememberMe}
-                                onIonChange={e => setRememberMe(e.detail.checked)}
-                                mode="ios"
-                            />
-                            <IonLabel style={{ color: "black", marginLeft: ".5rem" }}>จดจำฉันไว้</IonLabel>
-                        </div><br />
+                        </div>   
+                        <IonList className="form-input-sigin" >
+                            <IonItem className="signin-item" lines="none" style={{borderBottom:"1px solid #e9e8e8"}} >  
+                                <IonLabel position="stacked" className="signin-label ion-margin-start" > <small>เลือกผู้ขับขี่</small> </IonLabel>
+                                <Select 
+                                    className="signin-react-select"
+                                    classNamePrefix="signin-input"
+                                    options={driverOptions}
+                                    value={driverOptions.find(option => option.value === phone) || null}
+                                    onChange={selected => setPhone(selected?.value || DRIVER_PHONE_OPTIONS[0])}
+                                    isSearchable
+                                    placeholder="เลือกผู้ขับขี่"
+                                    menuPortalTarget={menuPortalTarget}
+                                    menuPosition="fixed"
+                                    styles={selectMenuStyles}
+                                />  
+                            </IonItem>
+                            <IonItem  lines="none" style={{borderBottom:"1px solid #DDD"}} >  
+                                <IonInput
+                                    value={phone}
+                                    type="text" label="เบอร์โทร" 
+                                    placeholder="00-000-0000"
+                                    label-placement="stacked" 
+                                    mode="ios" className="signin-ion-input"
+                                    onIonChange={e =>
+                                        setPhone(String(e.detail.value || ''))}
+                                ></IonInput>
+                            </IonItem>
+                            <IonItem   lines="none"  >  
+                                <IonInput
+                                    value={licenseNumber}  label-placement="stacked"
+                                    type="text"  label="หมายเลขใบขับขี่" 
+                                    placeholder="DL-2025-001" 
+                                    mode="ios" className="signin-ion-input"
+                                    onIonChange={e => setLicenseNumber(String(e.detail.value || ''))}
+                                ></IonInput>
+                            </IonItem>
+                        </IonList> <br/>
+
                         <div className="mt-2">
                             <IonButton expand="block" mode="ios" onClick={doLogin} className="bg-blue-600">
                                 <span style={{ color: "white" }} >เข้าสู่ระบบ</span>
