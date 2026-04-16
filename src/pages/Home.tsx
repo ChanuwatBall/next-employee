@@ -20,35 +20,7 @@ const Home: React.FC = () => {
   const [segment, setSegment] = useState<any>('active');
   const [isLoading, setIsLoading] = useState(false);
 
-  const getdriverTrips = async () => {
-    // const { data, error } = await supabase.from('trips')
-    //   .select('*, route_id(*)')
-    //   .gte('date', moment().utc().startOf("day"))
-    // if (error) {
-    //   console.log(error);
-    // }
-    // if (data) {
-    //   let tripid = data.map((trip: Trip) => trip.id)
-    //   const { data: seatData, error: seatError } = await supabase.from('seats')
-    //     .select('*')
-    //     .in('trip_id', tripid)
-    //     .order('id', { ascending: false })
-
-    //   console.log("data ", data);
-    //   for (const trip of data) {
-    //     if (seatData) {
-    //       let seats = seatData.filter((seat: any) => seat.trip_id === trip.id)
-    //       trip.seatBooked = seats.length;
-    //     } else {
-    //       trip.seatBooked = 0;
-    //     }
-    //     if (seatError) {
-    //       console.log(seatError);
-    //     }
-    //   }
-
-    //   setTrips(data);
-    // }
+  const getdriverTrips = async () => { 
     const token = localStorage.getItem('session') ? JSON.parse(localStorage.getItem('session') || '{}').access_token : null;
     const tripsData:any[] = await getDriverTrips(moment().format(), token);
     console.log("tripsData ", tripsData);
