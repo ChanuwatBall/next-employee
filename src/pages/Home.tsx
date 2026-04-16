@@ -116,9 +116,9 @@ const Home: React.FC = () => {
                 title={`${trip.origin} - ${trip.destination}`}
                 time={trip.departureTime}
                 arrive={trip.arrivalTime}
-                disabledSeat={trip.totalSeats - trip.totalPassengers}
+                disabledSeat={0}
                 tripdate={trip.date}
-                passengerOnboard={trip.totalPassengers - trip.checkedIn}
+                passengerOnboard={  trip.checkedIn}
                 totalPassenger={trip.totalSeats}
                 isOnBoard={moment(`${trip.date} ${trip?.departureTime}`).isBefore(moment())}
                 select={() => history.push(`/trip/${trip.tripId}`)}

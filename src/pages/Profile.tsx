@@ -1,7 +1,13 @@
-import { IonBackButton, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonList, IonPage, IonTitle, IonToolbar } from '@ionic/react';
+import { IonBackButton, IonButton, IonButtons, IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/react';
 import React, { useEffect, useState } from 'react';
 import './css/Profile.css';
-import { createOutline } from 'ionicons/icons';
+
+type SessionUser = {
+  id: string;
+  name: string;
+  phone: string;
+  licenseNumber: string;
+};
 
 type ProfileData = {
   avatar?: string;
@@ -13,28 +19,22 @@ type ProfileData = {
   // Add more fields as needed
 };
 const Profile: React.FC = () => {
-  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [profile, setProfile] = useState<SessionUser | null>(null);
 
   useEffect(() => {
     const sessionStr = localStorage.getItem('session');
     if (sessionStr) {
       try {
         const session = JSON.parse(sessionStr);
-        const user = session.user;
+        const user = session.driver as SessionUser | undefined;
         if (user) {
-          setProfile({
-            avatar: user.user_metadata?.avatar_url || "https://ui-avatars.com/api/?name=" + (user.email || "User") + "&background=random",
-            name: user.user_metadata?.full_name || user.email?.split('@')[0] || "User",
-            employeeCode: user.user_metadata?.employee_code || user.id?.substring(0, 8).toUpperCase() || "N/A",
-            username: user.email || "N/A",
-            position: user.user_metadata?.position || "พนักงาน",
-            role: user.role || "Authenticated",
-          });
+          setProfile(user );
         }
       } catch (error) {
         console.error("Error parsing session:", error);
       }
     }
+    console.log("profile ", profile);
   }, []);
 
   const doLogout = () => {
@@ -60,7 +60,7 @@ const Profile: React.FC = () => {
         <div className="max-w-md mx-auto p-4 bg-gray-50 rounded-lg shadow-sm">
 
           <div className='avatar-container ion-margin-bottom'>
-            <img src={profile?.avatar} alt="Avatar" className=" avatarimg " />
+            {/* <img src={profile?.avatar} alt="Avatar" className=" avatarimg " /> */}
             {/* <IonButton fill="clear" color="primary" onClick={() => alert('เปลี่ยนรูปโปรไฟล์')}>
               <IonIcon icon={createOutline} />
             </IonButton> */}
@@ -68,19 +68,19 @@ const Profile: React.FC = () => {
 
           <div className="grid grid-cols-3 ion-padding ion-margin-bottom">
             <div className="font-medium text-gray-600 text-bold-500 flex items-center">ชื่อ-สกุล:</div>
-            <div className="col-span-2 line-bottom-dashed">{profile?.name || '-'}</div>
+            <div className="col-span-2 line-bottom-dashed">{profile?.name }</div>
 
             <div className="font-medium text-gray-600 text-bold-500 flex items-center">รหัสพนักงาน:</div>
-            <div className="col-span-2 line-bottom-dashed ">{profile?.employeeCode || '-'}</div>
+            <div className="col-span-2 line-bottom-dashed ">{profile?.id &&  profile?.id.substring(0,10).toLocaleUpperCase() || '-'}</div>
 
-            <div className="font-medium text-gray-600 text-bold-500 flex items-center">ชื่อผู้ใช้:</div>
-            <div className="col-span-2 line-bottom-dashed ">{profile?.username || '-'}</div>
+            <div className="font-medium text-gray-600 text-bold-500 flex items-center">ใบขับขี่:</div>
+            <div className="col-span-2 line-bottom-dashed ">{profile?.licenseNumber || '-'}</div>
 
-            <div className="font-medium text-gray-600 text-bold-500 flex items-center">ตำแหน่ง:</div>
-            <div className="col-span-2 line-bottom-dashed ">{profile?.position || '-'}</div>
-
+            <div className="font-medium text-gray-600 text-bold-500 flex items-center">เบอร์โทร:</div>
+            <div className="col-span-2 line-bottom-dashed ">{profile?.phone || '-'}</div>
+{/* 
             <div className="font-medium text-gray-600 text-bold-500 flex items-center">บทบาท:</div>
-            <div className="col-span-2 line-bottom-dashed ">{profile?.role || '-'}</div>
+            <div className="col-span-2 line-bottom-dashed ">{profile?.role || '-'}</div> */}
           </div>
 
           <br />

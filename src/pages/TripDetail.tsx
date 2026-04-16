@@ -1,6 +1,6 @@
 import { faArrowDown, faArrowLeft, faArrowRight, faArrowUp, faCarSide, faLocationDot, faQrcode } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonButton, IonGrid, IonRow, IonCol, IonText, IonBackButton, IonLabel, IonIcon, IonChip, IonAccordion, IonAccordionGroup } from '@ionic/react';
+import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonButton, IonGrid, IonRow, IonCol, IonText, IonBackButton, IonLabel, IonIcon, IonChip, IonAccordion, IonAccordionGroup, IonBadge } from '@ionic/react';
 import moment, { duration } from 'moment';
 import React, { useEffect } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
@@ -11,11 +11,22 @@ import { supabase } from '../supabase/supabase';
 import { Trip } from '../types/trip';
 import { getTripSeats } from '../https/api';
 
+interface TripData {
+  id: string;
+  date: string;
+  departure_time: string;
+  arrival_time: string;
+  route_id: any;
+  bus_type_id: string;
+  bus_type: any;
+  bus_stops: any[];
+}
+
 const TripDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const history = useHistory();
   const [stationacc, setStationAcc] = React.useState<string>("");
-  const [trip, setTrip] = React.useState<Trip | null>(null);
+  const [trip, setTrip] = React.useState<TripData | null>(null);
 
   const getTrip = async () => {
     const { data, error } = await supabase.from('trips')
@@ -217,10 +228,16 @@ const StationTrip: React.FC<{ station: any }> = ({ station }) => {
         </div>
         <div className='col-span-8 ion-padding-start'>
           <IonLabel className='text-sm  ' color={"dark"} >{station.name}</IonLabel> <br />
-          <IonLabel className='text-xs text-meduim' >เวลา {station.time}</IonLabel>
+          {/* <IonLabel className='text-xs text-meduim' >เวลา {station.time}</IonLabel> */}
         </div>
         <div className='col-span-3 ion-text-right'>
-          <IonChip color={"tertiary"} >
+          <IonBadge color={"success"} className='text-sm' mode='ios' >
+           <IonText color={"light"}> {station.passengerOnboard}</IonText>
+          </IonBadge> &nbsp;
+          <IonBadge color={"danger"} className='text-sm' mode='ios' >
+            <IonText> {station.passengerOffboard}</IonText>
+          </IonBadge>
+          {/* <IonChip color={"tertiary"} >
             <IonLabel className='text-2xs text-dark' >
               <FontAwesomeIcon icon={faArrowUp} className='text-dark' />
               {station.passengerOnboard}
@@ -228,13 +245,19 @@ const StationTrip: React.FC<{ station: any }> = ({ station }) => {
             <IonLabel className='text-2xs text-dark' >
               <FontAwesomeIcon icon={faArrowDown} className='text-dark' />
               {station.passengerOffboard}  </IonLabel>
-          </IonChip>
+          </IonChip> */}
         </div>
       </div>
       <div slot='content' className='ion-padding' >
         <IonText className='text-sm text-meduim' color={"dark"} >
-          <FontAwesomeIcon icon={faArrowUp} />   ผู้โดยสารที่ขึ้นสถานี นี้ : {station.passengerOnboard} คน <br />
-          <FontAwesomeIcon icon={faArrowDown} />   ผู้โดยสารที่ลงสถานี นี้ : {station.passengerOffboard} คน <br />
+          <FontAwesomeIcon icon={faArrowUp} />   ผู้โดยสารที่ขึ้นสถานี นี้ : &nbsp;
+          <IonBadge color={"success"} className='text-sm' mode='ios' >
+           <IonText color={"light"}> {station.passengerOnboard} คน </IonText>
+          </IonBadge> <br/>
+          <FontAwesomeIcon icon={faArrowDown} />   ผู้โดยสารที่ลงสถานี นี้ : &nbsp;
+          <IonBadge color={"danger"} className='text-sm' mode='ios' >
+            <IonText color={"light"}> {station.passengerOffboard} คน </IonText>
+          </IonBadge>  <br />
         </IonText>
       </div>
     </IonAccordion>

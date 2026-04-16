@@ -91,7 +91,8 @@ const Sigin: React.FC = () => {
             localStorage.setItem('isAuthenticated', "true");
             localStorage.setItem('role', 'driver');
            if (loginres?.token) {
-                localStorage.setItem('session', JSON.stringify({ access_token: loginres?.token , expires_in: moment().add(1, 'hour').format() }));
+                localStorage.setItem('session', 
+                    JSON.stringify({ access_token: loginres?.token , expires_in: moment().add(1, 'hour').format() , driver: loginres?.driver }));
                 window.location.href = '/home';
             } else {
                 localStorage.removeItem('session');

@@ -22,7 +22,7 @@ import {
 } from "@ionic/react";
 import { CircleDot, DoorOpen, Toilet, TriangleAlert, MoveDown, User, Armchair, X } from "lucide-react";
 import { supabase } from "../supabase/supabase";
-import { Trip } from "../types/trip";
+import { Trip, TripDetail } from "../types/trip";
 import moment from "moment";
 import "./css/PlanChair.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -151,7 +151,7 @@ export function isSpecialCell(label: string | null): boolean {
 const PlanChair: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const history = useHistory();
-    const [trip, setTrip] = useState<Trip | null>(null);
+    const [trip, setTrip] = useState<TripDetail | null>(null);
     const [seats, setSeats] = useState<Seat[]>([]);
     const [showSeatModal, setShowSeatModal] = useState(false);
     const [booking, setBooking] = useState<any[]>([]);
@@ -178,15 +178,14 @@ const PlanChair: React.FC = () => {
             // Fetch Booking
             const { data: dataBooking, error: bookingError } = await supabase.from("bookings")
                 .select("*")
-                .eq("trip_id", id)
-                .eq("status", "confirmed")
-                .eq("payment_status", "paid");
+                .eq("trip_id", id) 
 
             if (bookingError) throw bookingError;
+            console.log("dataBooking ", dataBooking);
 
             setBooking(dataBooking || []);
             const bookingIds = (dataBooking || []).map((b: any) => b.id);
-
+            console.log("bookingIds ", bookingIds);
             // Fetch Trip
             const { data: tripData, error: tripError } = await supabase
                 .from("trips")
