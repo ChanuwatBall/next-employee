@@ -32,7 +32,7 @@ const TicketDetail: React.FC = () => {
   const handlerCall = async (result: string) => {
     const sessionstr = localStorage.getItem("session")
     const session = JSON.parse(sessionstr || "{}")
-    
+
     try {
       const { error: callCustomerError } = await supabase.from("call_customer").insert({
         booking_id: metadata?.booking_id,
@@ -124,18 +124,18 @@ const TicketDetail: React.FC = () => {
     actionSheet({
       header: `ที่นั่ง ${p.seat_number} - ${p.passenger_name}`,
       buttons: [
-        { 
-          text: "โทรติดต่อผู้โดยสาร", 
-          icon: callOutline, 
-          handler: () => { 
+        {
+          text: "โทรติดต่อผู้โดยสาร",
+          icon: callOutline,
+          handler: () => {
             calltoCustomer(p.passenger_phone, p);
-          } 
+          }
         },
-        { 
-          text: p.checked_in_at ? "เช็คอินแล้ว" : "เช็คอินผู้โดยสาร", 
-          icon: checkmarkCircleOutline, 
+        {
+          text: p.checked_in_at ? "เช็คอินแล้ว" : "เช็คอินผู้โดยสาร",
+          icon: checkmarkCircleOutline,
           disabled: !!p.checked_in_at,
-          handler: () => { checkInSeat(p) } 
+          handler: () => { checkInSeat(p) }
         },
         { text: "ยกเลิก", role: "cancel" }
       ]

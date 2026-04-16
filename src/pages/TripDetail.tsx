@@ -10,6 +10,7 @@ import { supabase } from '../supabase/supabase';
 
 import { Trip } from '../types/trip';
 import { getTripSeats } from '../https/api';
+import { getDriverTripPassengers } from '../http/api';
 
 interface TripData {
   id: string;
@@ -29,6 +30,12 @@ const TripDetail: React.FC = () => {
   const [trip, setTrip] = React.useState<TripData | null>(null);
 
   const getTrip = async () => {
+
+    const sessionstr = localStorage.getItem("session")
+    const session = JSON.parse(sessionstr || "{}")
+    const passengers = await getDriverTripPassengers(id, session.access_token)
+    console.log("passengers ", passengers)
+
     const { data, error } = await supabase.from('trips')
       .select('*, route_id(*)')
       .eq('id', id)
@@ -232,7 +239,7 @@ const StationTrip: React.FC<{ station: any }> = ({ station }) => {
         </div>
         <div className='col-span-3 ion-text-right'>
           <IonBadge color={"success"} className='text-sm' mode='ios' >
-           <IonText color={"light"}> {station.passengerOnboard}</IonText>
+            <IonText color={"light"}> {station.passengerOnboard}</IonText>
           </IonBadge> &nbsp;
           <IonBadge color={"danger"} className='text-sm' mode='ios' >
             <IonText> {station.passengerOffboard}</IonText>
@@ -252,8 +259,8 @@ const StationTrip: React.FC<{ station: any }> = ({ station }) => {
         <IonText className='text-sm text-meduim' color={"dark"} >
           <FontAwesomeIcon icon={faArrowUp} />   ผู้โดยสารที่ขึ้นสถานี นี้ : &nbsp;
           <IonBadge color={"success"} className='text-sm' mode='ios' >
-           <IonText color={"light"}> {station.passengerOnboard} คน </IonText>
-          </IonBadge> <br/>
+            <IonText color={"light"}> {station.passengerOnboard} คน </IonText>
+          </IonBadge> <br />
           <FontAwesomeIcon icon={faArrowDown} />   ผู้โดยสารที่ลงสถานี นี้ : &nbsp;
           <IonBadge color={"danger"} className='text-sm' mode='ios' >
             <IonText color={"light"}> {station.passengerOffboard} คน </IonText>

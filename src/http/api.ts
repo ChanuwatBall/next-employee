@@ -47,3 +47,14 @@ export const driverCheckIn = async <T = unknown>(
 
 	return response.data;
 };
+
+export const getDriverTripPassengers = async <T = unknown>(
+	tripId: string,
+	token: string,
+): Promise<T> => {
+	const response = await apiClient.get<T>(`/driver/trips/${tripId}/passengers`, {
+		headers: getAuthorizationHeader(token),
+	});
+
+	return response.data;
+};
