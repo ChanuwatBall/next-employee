@@ -20,9 +20,9 @@ const Home: React.FC = () => {
   const [segment, setSegment] = useState<any>('active');
   const [isLoading, setIsLoading] = useState(false);
 
-  const getdriverTrips = async () => { 
+  const getdriverTrips = async () => {
     const token = localStorage.getItem('session') ? JSON.parse(localStorage.getItem('session') || '{}').access_token : null;
-    const tripsData:any[] = await getDriverTrips(moment().format(), token);
+    const tripsData: any[] = await getDriverTrips(moment().format(), token);
     console.log("tripsData ", tripsData);
     setTrips(tripsData);
   }
@@ -40,7 +40,7 @@ const Home: React.FC = () => {
     return 'ตอนดึก';
   })();
 
- 
+
 
   // const tripsFilter = useCallback((trips: Trip[]) => {
   //   const v = (query || '').trim().toLowerCase();
@@ -118,10 +118,11 @@ const Home: React.FC = () => {
                 arrive={trip.arrivalTime}
                 disabledSeat={0}
                 tripdate={trip.date}
-                passengerOnboard={  trip.checkedIn}
+                passengerOnboard={trip.checkedIn}
                 totalPassenger={trip.totalSeats}
                 isOnBoard={moment(`${trip.date} ${trip?.departureTime}`).isBefore(moment())}
                 select={() => history.push(`/trip/${trip.tripId}`)}
+                busNumber={trip.busNumber}
               />
             </BouceAnimation>
           ))}
@@ -150,9 +151,10 @@ interface CardTripProps {
   isOnBoard?: boolean;
   isEnded?: boolean;
   select(): void;
+  busNumber?: string;
 }
 
-const CardTrip: React.FC<CardTripProps> = ({ title, time, arrive, disabledSeat, tripdate, passengerOnboard, totalPassenger, isOnBoard, isEnded, select }) => {
+const CardTrip: React.FC<CardTripProps> = ({ busNumber, title, time, arrive, disabledSeat, tripdate, passengerOnboard, totalPassenger, isOnBoard, isEnded, select }) => {
   return (
     <div className="card-trip ion-margin-bottom  bg-white shadow  border-1 border-solid  " onClick={() => select()} >
       <div className="grid grid-cols-3 p-4">
@@ -160,6 +162,8 @@ const CardTrip: React.FC<CardTripProps> = ({ title, time, arrive, disabledSeat, 
         <div className="text-sm text-gray-500 col-span-2" >
           <div className="font-medium ion-padding-bottom"  >
             <IonLabel style={{ fontSize: "large" }}> <b> {title} </b> </IonLabel>
+            <p style={{ color: "#000" }} className='ion-no-margin'> ทะเบียนรถ : {busNumber}</p>
+
           </div>
           <IonLabel style={{ fontSize: "medium" }}>
             <FontAwesomeIcon icon={faClock} /> &nbsp;
