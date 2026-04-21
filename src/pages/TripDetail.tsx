@@ -33,35 +33,19 @@ const TripDetail: React.FC = () => {
 
     const sessionstr = localStorage.getItem("session")
     const session = JSON.parse(sessionstr || "{}")
-    const passengers = await getDriverTripPassengers(id, session.access_token)
+    const passengers: any[] = await getDriverTripPassengers(id, session.access_token)
     console.log("passengers ", passengers)
 
     const { data, error } = await supabase.from('trips')
       .select('*, route_id(*)')
       .eq('id', id)
       .single();
+    console.log("trips data ", data);
     if (error) {
       console.log(error);
     }
     if (data) {
-      const { data: dataBooking, error: bookingError } = await supabase.from('bookings')
-        .select('*')
-        .eq('trip_id', id)
-        .eq('status', "confirmed")
-      if (bookingError) {
-        throw "dataBooking err " + bookingError
-      }
-      console.log("dataBooking ", dataBooking);
-      let bkid = dataBooking.map((b) => b.id)
-
-      const { data: dataTicket, error: ticketError } = await supabase.from('tickets')
-        .select('*')
-        .in('booking_id', bkid)
-        .eq("status", "active")
-      if (ticketError) {
-        throw ticketError
-      }
-      console.log("dataTicket ", dataTicket);
+      console.log("trips data ", data);
 
       const { data: busStops, error: busStopsError } = await supabase.from('bus_stops')
         .select('*')
@@ -70,18 +54,10 @@ const TripDetail: React.FC = () => {
         throw busStopsError
       }
       console.log("busStops ", busStops);
-      for (const bsp of busStops) {
-        // Find tickets where the associated booking has this stop as pickup
-        const onBoardTickets = dataTicket.filter(t => {
-          const booking = dataBooking.find(b => b.id === t.booking_id);
-          return booking && booking.pickup_stop === bsp.name;
-        });
 
-        // Find tickets where the associated booking has this stop as dropoff
-        const offBoardTickets = dataTicket.filter(t => {
-          const booking = dataBooking.find(b => b.id === t.booking_id);
-          return booking && booking.dropoff_stop === bsp.name;
-        });
+      for (const bsp of busStops) {
+        const onBoardTickets = passengers.filter((p: any) => p.pickupStop === bsp.name);
+        const offBoardTickets = passengers.filter((p: any) => p.dropoffStop === bsp.name);
 
         bsp.passengerOnboard = onBoardTickets.length;
         bsp.passengerOffboard = offBoardTickets.length;

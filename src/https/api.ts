@@ -24,7 +24,31 @@ export const getBookingDetail = async (id: string) => {
       Authorization: `Bearer ${session?.access_token}`
     }
   })
-  return response;
+  return response.data;
 }
+
+// curl /api/checkin/self \
+//   --request POST \
+//   --header 'Content-Type: application/json' \
+//   --data '{
+//   "ticketNumber": "",
+//   "qrCode": ""
+// }'
+
+export const checkInSelf = async (ticketNumber: string, qrCode: string) => {
+  const userstr = localStorage.getItem("session")
+  const session = userstr ? JSON.parse(userstr) : null;
+  const response = await api.post(`/checkin/self`, {
+    ticketNumber,
+    qrCode
+  }, {
+    headers: {
+      Authorization: `Bearer ${session?.access_token}`
+    }
+  })
+  return response.data;
+}
+
+
 export default api;
 

@@ -58,3 +58,11 @@ export const getDriverTripPassengers = async <T = unknown>(
 
 	return response.data;
 };
+
+export const getBookingDetail = async <T = unknown>(id: string, token: string): Promise<T> => {
+	const response = await apiClient.get<T>(`/bookings/${id}`, {
+		headers: getAuthorizationHeader(token),
+	});
+
+	return response.data;
+};

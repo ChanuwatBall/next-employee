@@ -1,16 +1,33 @@
-.card-trip{
+.card-trip {
     border-radius: 1.3rem;
-    border: 1px solid  var(--ion-color-light-tint);
+    border: 1px solid var(--ion-color-light-tint);
     padding: 1em;
     padding-bottom: 0;
     background-color: var(--ion-color-light);
 }
 
 ion-searchbar.search-trip {
-  --background: var(--ion-color-white);
-  --placeholder-color: var(--ion-color-primary);
-  --icon-color: var(--ion-color-primary);
+    --background: var(--ion-color-white);
+    --placeholder-color: var(--ion-color-primary);
+    --icon-color: var(--ion-color-primary);
     max-height: 3rem !important;
     border: 1px solid var(--ion-color-primary) !important;
-    border-radius: 1.5rem; 
-} 
+    border-radius: 1.5rem;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.text-white {
+    color: #FFF !important;
+}
+
+.rounded-2xl {
+    border-radius: 15px !important;
+}

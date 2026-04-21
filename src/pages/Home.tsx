@@ -1,4 +1,4 @@
-import { IonChip, IonContent, IonHeader, IonLabel, IonLoading, IonPage, IonSearchbar, IonSegment, IonSegmentButton, IonText, IonToolbar } from '@ionic/react';
+import { IonChip, IonContent, IonHeader, IonLabel, IonLoading, IonPage, IonSearchbar, IonSegment, IonSegmentButton, IonText, IonToolbar, IonButton } from '@ionic/react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faQrcode } from '@fortawesome/free-solid-svg-icons'
@@ -19,18 +19,27 @@ const Home: React.FC = () => {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [segment, setSegment] = useState<any>('active');
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(moment());
 
-  const getdriverTrips = async () => {
-    const token = localStorage.getItem('session') ? JSON.parse(localStorage.getItem('session') || '{}').access_token : null;
-    const tripsData: any[] = await getDriverTrips(moment().format(), token);
-    console.log("tripsData ", tripsData);
-    setTrips(tripsData);
+  const getdriverTrips = async (date: moment.Moment) => {
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem('session') ? JSON.parse(localStorage.getItem('session') || '{}').access_token : null;
+      const tripsData: any[] = await getDriverTrips(date.format('YYYY-MM-DD'), token);
+      console.log("tripsData ", tripsData);
+      setTrips(tripsData);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   useEffect(() => {
-    getdriverTrips();
-    console.log("trips ", trips);
-  }, []);
+    getdriverTrips(selectedDate);
+  }, [selectedDate]);
+
+  const dates = Array.from({ length: 14 }, (_, i) => moment().subtract(3, 'days').add(i, 'days'));
 
   const hellotime = (() => {
     const hour = moment().hour();
@@ -94,6 +103,32 @@ const Home: React.FC = () => {
             onIonInput={(e: any) => setQuery(e.detail?.value ?? '')}
           />
           <br />
+
+          <div className="flex overflow-x-auto pb-4 no-scrollbar gap-2" style={{ WebkitOverflowScrolling: 'touch' }}>
+            {dates.map((date, index) => {
+              const isSelected = date.isSame(selectedDate, 'day');
+              const isToday = date.isSame(moment(), 'day');
+              return (
+                <div
+                  key={index}
+                  onClick={() => setSelectedDate(date)}
+                  className={`flex flex-col items-center justify-center min-w-[60px] h-[80px] rounded-2xl transition-all duration-200 cursor-pointer ${isSelected ? 'bg-primary text-white shadow-lg scale-105' : 'bg-gray-50 text-gray-400'
+                    }`}
+                >
+                  <span className="text-[10px] font-medium uppercase mb-1">
+                    {date.format('ddd')}
+                  </span>
+                  <span className={`text-xl font-bold ${isSelected ? 'text-white rounded-2xl' : 'text-gray-800'}`}>
+                    {date.format('D')}
+                  </span>
+                  {isToday && !isSelected && (
+                    <div className="w-1 h-1 bg-primary text-white rounded-full mt-1" />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <br />
           <IonSegment mode='ios' value={segment} onIonChange={(e) => setSegment(e.detail.value as any)} className="mb-4">
             <IonSegmentButton value="active">
               <IonLabel>เที่ยวปัจจุบัน</IonLabel>
@@ -120,7 +155,8 @@ const Home: React.FC = () => {
                 tripdate={trip.date}
                 passengerOnboard={trip.checkedIn}
                 totalPassenger={trip.totalSeats}
-                isOnBoard={moment(`${trip.date} ${trip?.departureTime}`).isBefore(moment())}
+                isOnBoard={moment(`${trip.date} ${trip?.departureTime}`).isBefore(moment()) && moment(`${trip.date} ${trip?.arrivalTime}`).isAfter(moment())}
+                isEnded={moment(`${trip.date} ${trip?.arrivalTime}`).isBefore(moment())}
                 select={() => history.push(`/trip/${trip.tripId}`)}
                 busNumber={trip.busNumber}
               />
@@ -156,7 +192,7 @@ interface CardTripProps {
 
 const CardTrip: React.FC<CardTripProps> = ({ busNumber, title, time, arrive, disabledSeat, tripdate, passengerOnboard, totalPassenger, isOnBoard, isEnded, select }) => {
   return (
-    <div className="card-trip ion-margin-bottom  bg-white shadow  border-1 border-solid  " onClick={() => select()} >
+    <div className="card-trip ion-margin-bottom  bg-white shadow  border-1 border-solid ion-padding-bottom" onClick={() => select()} >
       <div className="grid grid-cols-3 p-4">
 
         <div className="text-sm text-gray-500 col-span-2" >
@@ -181,6 +217,20 @@ const CardTrip: React.FC<CardTripProps> = ({ busNumber, title, time, arrive, dis
             Disabled: {disabledSeat || 0}</p>
         </div>
       </div>
+      {!isEnded && isOnBoard && (
+        <div className="px-4 pb-4">
+          <IonButton expand="block" color="success" size="small" mode="ios" className="ion-no-margin" onClick={(e: React.MouseEvent) => { e.stopPropagation(); console.log('Start Trip'); }}>
+            เริ่มเดินทาง
+          </IonButton>
+        </div>
+      )}
+      {isEnded && (
+        <div className="px-4 pb-4">
+          <IonButton expand="block" color="danger" size="small" mode="ios" className="ion-no-margin" onClick={(e: React.MouseEvent) => { e.stopPropagation(); console.log('End Trip'); }}>
+            กดจบเที่ยว
+          </IonButton>
+        </div>
+      )}
     </div>
   );
 }

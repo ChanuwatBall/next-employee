@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useCallback, useEffect } from "react";
-import { getTripSeats } from "../https/api";
+import { checkInSelf, getTripSeats } from "../https/api";
+import { getDriverTripPassengers } from "../http/api";
 import { useParams, useHistory } from "react-router-dom";
 import {
     IonPage,
@@ -29,6 +30,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircleCheck, faClock } from "@fortawesome/free-solid-svg-icons";
 import { callOutline, thumbsDownOutline, thumbsUpOutline, helpCircleOutline } from "ionicons/icons";
 import { usePhoneCallFlow } from "../hooks/usePhoneCallFlow";
+import QRCode from "qrcode";
 
 // --- Types ---
 type SeatStatus = "available" | "booked" | "unavailable" | "selected";
@@ -154,7 +156,6 @@ const PlanChair: React.FC = () => {
     const [trip, setTrip] = useState<TripDetail | null>(null);
     const [seats, setSeats] = useState<Seat[]>([]);
     const [showSeatModal, setShowSeatModal] = useState(false);
-    const [booking, setBooking] = useState<any[]>([]);
     const [selectedSeatData, setSelectedSeatData] = useState<any | null>(null);
     const [iontoast] = useIonToast();
     const [presentActionSheet] = useIonActionSheet();
@@ -175,17 +176,11 @@ const PlanChair: React.FC = () => {
     const fetchTripAndSeats = async () => {
         setIsLoading(true);
         try {
-            // Fetch Booking
-            const { data: dataBooking, error: bookingError } = await supabase.from("bookings")
-                .select("*")
-                .eq("trip_id", id) 
+            const sessionstr = localStorage.getItem("session");
+            const session = JSON.parse(sessionstr || "{}");
+            const passengers: any[] = await getDriverTripPassengers(id, session.access_token);
+            console.log("passengers ", passengers);
 
-            if (bookingError) throw bookingError;
-            console.log("dataBooking ", dataBooking);
-
-            setBooking(dataBooking || []);
-            const bookingIds = (dataBooking || []).map((b: any) => b.id);
-            console.log("bookingIds ", bookingIds);
             // Fetch Trip
             const { data: tripData, error: tripError } = await supabase
                 .from("trips")
@@ -199,6 +194,7 @@ const PlanChair: React.FC = () => {
             // Fetch Layout and Seats from Nex API
             const apiData = await getTripSeats(id);
             if (apiData) {
+                console.log("apiData ", apiData)
                 if (apiData.layout) setLayout(apiData.layout);
                 if (apiData.seats) {
                     const mappedSeats: Seat[] = apiData.seats.map((s: any) => ({
@@ -211,17 +207,24 @@ const PlanChair: React.FC = () => {
                         ticket_id: null
                     }));
 
-                    if (bookingIds.length > 0) {
-                        const { data: dataTicket } = await supabase.from("tickets")
-                            .select("*")
-                            .in("booking_id", bookingIds)
-                            .eq("status", "active");
-
-                        if (dataTicket) {
-                            for (const ms of mappedSeats) {
-                                const match = dataTicket.find((t: any) => t.seat_number === ms.number);
-                                if (match) ms.ticket_id = match;
-                            }
+                    for (const ms of mappedSeats) {
+                        const match = passengers.find((p: any) => p.seatNumber === ms.number);
+                        if (match) {
+                            // Remap camelCase to snake_case for UI compatibility
+                            ms.ticket_id = {
+                                id: match.id,
+                                ticket_number: match.ticketNumber,
+                                passenger_name: match.passengerName,
+                                passenger_phone: match.phone,
+                                passenger_type: match.passengerType,
+                                seat_number: match.seatNumber,
+                                status: match.status,
+                                checked_in_at: match.checkedInAt,
+                                booking_id: match.bookingId,
+                                price: match.price,
+                                qr_code: match.qrCode || '',
+                                created_at: match.createdAt || new Date().toISOString()
+                            } as any;
                         }
                     }
                     setSeats(mappedSeats);
@@ -262,7 +265,7 @@ const PlanChair: React.FC = () => {
                 return { ...s, status: "selected" };
             })
         );
-    }, [id, booking]);
+    }, [id]);
 
     const handleContinue = () => history.goBack();
 
@@ -295,12 +298,19 @@ const PlanChair: React.FC = () => {
         setIsSaving(true);
         const checkedAt = moment().format();
         try {
-            const { error } = await supabase
-                .from('tickets')
-                .update({ checked_in_at: checkedAt })
-                .eq('id', selectedSeatData.ticket_id.id);
+            console.log("selectedSeatData ", selectedSeatData)
+            const qrBookingCode = await QRCode.toDataURL(selectedSeatData?.ticket_id?.ticket_number);
+            const rescheckin = await checkInSelf(selectedSeatData?.ticket_id?.ticket_number, qrBookingCode);
+            if (rescheckin.error) {
+                iontoast({ message: "เช็คอินไม่สำเร็จ", duration: 2000, color: "danger", position: "top" });
+                return;
+            }
+            // const { error } = await supabase
+            //     .from('tickets')
+            //     .update({ checked_in_at: checkedAt })
+            //     .eq('id', selectedSeatData.ticket_id.id);
 
-            if (error) throw error;
+            // if (error) throw error;
 
             setSelectedSeatData((prev: any) => ({
                 ...prev,
@@ -370,7 +380,7 @@ const PlanChair: React.FC = () => {
                                     {row.map((cell, colIdx) => {
                                         const isAisle = colIdx === 1 && (layout.id.includes('12m') || layout.id.includes('7m'));
                                         const aisleClass = isAisle ? "aisle-margin" : "";
-                                        if (cell === null) return <div key={colIdx} className={`seat-null ${aisleClass}`} />;
+                                        if (cell === null || cell === "") return <div key={colIdx} className={`seat-null ${aisleClass}`} />;
                                         if (isSpecialCell(cell)) {
                                             return (
                                                 <div key={colIdx} className={`special-cell ${aisleClass}`}>

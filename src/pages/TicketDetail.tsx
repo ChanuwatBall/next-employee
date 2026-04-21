@@ -9,22 +9,23 @@ import { useIonToast, IonActionSheet } from '@ionic/react';
 import React, { use, useEffect } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import { BouceAnimation } from '../components/Animations';
-import { getBookingDetail } from '../https/api';
 import { supabase } from '../supabase/supabase';
-import { Booking } from '../types/Booking';
+import { BookingResponse, Ticket } from '../types/Ticket';
+import { checkInSelf, getBookingDetail } from '../https/api';
+import QRCode from "qrcode";
 
 const TicketDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const history = useHistory();
   const [actionSheet, dimissActionSheet] = useIonActionSheet();
-  const [booking, setBooking] = React.useState<any | null>(null);
+  const [booking, setBooking] = React.useState<BookingResponse | null>(null);
   const [ionalert, dimissIonAlert] = useIonAlert();
   const [iontoast] = useIonToast();
   const [present, dismiss] = useIonLoading();
 
   const { startCall, showResultSheet, setShowResultSheet, submitCallResult, currentPhone, metadata } = usePhoneCallFlow();
 
-  const calltoCustomer = (phone: string, ticketData: any) => {
+  const calltoCustomer = (phone: string, ticketData: Ticket) => {
     if (!phone) return;
     startCall(phone, ticketData);
   }
@@ -58,27 +59,25 @@ const TicketDetail: React.FC = () => {
     }
   }
 
-  const checkInSeat = async (ticket: any) => {
+  const checkInSeat = async (ticket: Ticket) => {
     if (!ticket) return;
     await present({ message: 'กำลังบันทึกข้อมูล...' });
     const checkedAt = moment().format();
     try {
-      const { error } = await supabase
-        .from('tickets')
-        .update({ checked_in_at: checkedAt })
-        .eq('id', ticket.id);
+      const qrBookingCode = await QRCode.toDataURL(ticket?.id);
+      const rescheckin = await checkInSelf(ticket.ticket_number, qrBookingCode);
 
-      if (error) {
-        console.error('Error checking in ticket:', error);
+      if (rescheckin.error) {
+        console.error('Error checking in ticket:', rescheckin.error);
         iontoast({ message: 'เช็คอินไม่สำเร็จ', color: 'danger', duration: 2000 });
         return;
       }
 
-      setBooking((prev: any) => {
+      setBooking((prev) => {
         if (!prev) return prev;
         return {
           ...prev,
-          tickets: prev.tickets.map((t: any) => t.id === ticket.id ? { ...t, checked_in_at: checkedAt } : t)
+          tickets: prev.tickets.map((t: Ticket) => t.id === ticket.id ? { ...t, checked_in_at: checkedAt } : t)
         };
       });
 
@@ -94,23 +93,27 @@ const TicketDetail: React.FC = () => {
     if (!booking?.tickets) return;
     await present({ message: 'กำลังเช็คอินผู้โดยสารทั้งหมด...' });
     const checkedAt = moment().format();
-    const ticketIds = booking.tickets.map((t: any) => t.id);
+    const ticketIds = booking.tickets.map((t: Ticket) => t.id);
 
     try {
-      const { error } = await supabase
-        .from('tickets')
-        .update({ checked_in_at: checkedAt })
-        .in('id', ticketIds);
+      booking.tickets.map(async (ticket: Ticket) => {
+        const qrBookingCode = await QRCode.toDataURL(ticket?.id);
+        const rescheckin = await checkInSelf(ticket.ticket_number, qrBookingCode);
+        if (rescheckin.error) {
+          console.error('Error checking in ticket:', rescheckin.error);
+          iontoast({ message: 'เช็คอิน' + ticket?.passenger_name + 'ไม่สำเร็จ', color: 'danger', duration: 2000, position: "top" })
+        } else {
+          iontoast({ message: 'เช็คอิน' + ticket?.passenger_name + 'สำเร็จ', color: 'success', duration: 2000, position: "top" })
+        }
+      })
 
-      if (error) {
-        console.error('Error checking in all tickets:', error);
-        return;
-      }
-
-      setBooking((prev: any) => ({
-        ...prev,
-        tickets: prev.tickets.map((t: any) => ({ ...t, checked_in_at: checkedAt }))
-      }));
+      setBooking((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          tickets: prev.tickets.map((t: Ticket) => ({ ...t, checked_in_at: checkedAt }))
+        };
+      });
 
       iontoast({ message: 'เช็คอินผู้โดยสารทั้งหมดแล้ว', color: 'success', duration: 2000 });
     } catch (err) {
@@ -120,7 +123,7 @@ const TicketDetail: React.FC = () => {
     }
   }
 
-  const actionPassenger = (p: any) => {
+  const actionPassenger = (p: Ticket) => {
     actionSheet({
       header: `ที่นั่ง ${p.seat_number} - ${p.passenger_name}`,
       buttons: [
@@ -144,56 +147,58 @@ const TicketDetail: React.FC = () => {
 
   useEffect(() => {
     const conf = async () => {
-      await present({ message: 'กำลังโหลดข้อมูล...' });
+      // await present({ message: 'กำลังโหลดข้อมูล...' });
       try {
-        console.log("bookingReference paaram id: ", id)
-        const { data: booking, error: bookingError } = await supabase.from('bookings')
+        const token = localStorage.getItem("session")
+        const bookingData: BookingResponse = await getBookingDetail(id)
+        console.log("booking: ", bookingData)
+        // setBooking(booking)
+        // const { data: booking, error: bookingError } = await supabase.from('bookings')
+        //   .select(` * `)
+        //   .eq('id', id)
+        //   .single()
+        // if (bookingError) {
+        //   console.log(bookingError);
+        // }
+        // console.log("booking: ", JSON.stringify(booking))
+        // if (booking) {
+        //   const { data: trip, error: tripError } = await supabase.from('trips')
+        //     .select(` * `)
+        //     .eq('id', booking.trip_id)
+        //     .single()
+        //   if (tripError) {
+        //     console.log(tripError);
+        //   }
+        //   if (trip) {
+        //     console.log("trip: ", JSON.stringify(trip))
+        //     const { data: route, error: routeError } = await supabase.from('routes')
+        //       .select(` * `)
+        //       .eq('id', trip.route_id)
+        //       .single()
+        //     if (routeError) {
+        //       console.log(routeError);
+        //     }
+        //     if (route) {
+        //       trip.route = route
+        //     }
+
+        //     booking.trip = trip
+        //   }
+
+
+        const { data: dataTicket, error: ticketError } = await supabase.from('tickets')
           .select(` * `)
-          .eq('booking_reference', id)
-          .single()
-        if (bookingError) {
-          console.log(bookingError);
+          .eq('booking_id', bookingData.id)
+        if (ticketError) {
+          console.log(ticketError);
         }
-        console.log("booking: ", JSON.stringify(booking))
-        if (booking) {
-          const { data: trip, error: tripError } = await supabase.from('trips')
-            .select(` * `)
-            .eq('id', booking.trip_id)
-            .single()
-          if (tripError) {
-            console.log(tripError);
-          }
-          if (trip) {
-            console.log("trip: ", JSON.stringify(trip))
-            const { data: route, error: routeError } = await supabase.from('routes')
-              .select(` * `)
-              .eq('id', trip.route_id)
-              .single()
-            if (routeError) {
-              console.log(routeError);
-            }
-            if (route) {
-              trip.route = route
-            }
+        if (dataTicket) {
+          bookingData.tickets = dataTicket
 
-            booking.trip = trip
-          }
-
-
-          const { data: dataTicket, error: ticketError } = await supabase.from('tickets')
-            .select(` * `)
-            .eq('booking_id', booking.id)
-          if (ticketError) {
-            console.log(ticketError);
-          }
-          if (dataTicket) {
-            console.log(" dataTicket ", JSON.stringify(dataTicket));
-            booking.tickets = dataTicket
-
-            console.log("succss booking ", booking);
-            setBooking(booking)
-          }
+          console.log("succss booking ", bookingData);
+          setBooking(bookingData)
         }
+        // }
       } catch (e) {
         console.log("error: ", JSON.stringify(e))
         ionalert({
@@ -269,13 +274,13 @@ const TicketDetail: React.FC = () => {
 
             <div className='grid grid-cols-12 gap-2 text-light ion-margin-horizontal items-center' >
               <div className='col-span-5 overflow-hidden'>
-                <IonLabel style={{ fontWeight: "bolder", color: "#FFF", fontSize: "1.8rem", whiteSpace: "nowrap", display: "block" }} >{booking?.trip?.route?.origin}</IonLabel>
+                <IonLabel style={{ fontWeight: "bolder", color: "#FFF", fontSize: "1.8rem", whiteSpace: "nowrap", display: "block" }} >{booking?.origin}</IonLabel>
               </div>
               <div className='col-span-2 ion-text-center flex items-center justify-center ' >
                 <FontAwesomeIcon icon={faArrowRight} style={{ fontWeight: "bolder", fontSize: "1.2em", color: "#FFF" }} />
               </div>
               <div className='col-span-5 ion-text-right overflow-hidden'>
-                <IonLabel style={{ fontWeight: "bolder", color: "#FFF", fontSize: "1.8rem", whiteSpace: "nowrap", display: "block" }}>{booking?.trip?.route?.destination}</IonLabel>
+                <IonLabel style={{ fontWeight: "bolder", color: "#FFF", fontSize: "1.8rem", whiteSpace: "nowrap", display: "block" }}>{booking?.destination}</IonLabel>
               </div>
             </div>
             <div className='  flex justify-center items-center w-full' >
@@ -283,7 +288,7 @@ const TicketDetail: React.FC = () => {
               <div style={{ width: "79%", borderWidth: "1px", borderColor: "#FFF" }} className='border-dashed' ></div>
             </div>
             <div className='ion-margin-horizontal ion-text-right ' >
-              <IonLabel className='text-light' style={{ fontSize: "0.8em", color: "white" }} >{booking?.trip?.date && moment(booking?.trip?.date).format('DD MMMM , YYYY')}</IonLabel>
+              <IonLabel className='text-light' style={{ fontSize: "0.8em", color: "white" }} >{booking?.date && moment(booking?.date).format('DD MMMM , YYYY')}</IonLabel>
             </div>
           </div>
         </BouceAnimation>
@@ -297,18 +302,18 @@ const TicketDetail: React.FC = () => {
               style={{ borderRadius: "1rem", zIndex: 99, width: " 90vw", maxWidth: "720px", boxShadow: "rgba(100, 100, 111, 0.2) 0px 7px 29px 0px", gap: "0.5rem" }} >
               <div className='bg-light-tint ion-padding ion-radius' >
                 <IonLabel className='text-xs ' color={"dark"} >รถออกจากต้นทาง</IonLabel><br />
-                <IonLabel className='text-2xl' color={"dark"} style={{ fontWeight: 600 }} >{booking?.trip?.departure_time}</IonLabel> <br />
-                <IonLabel className='text-xs' color={"dark"} >จุดขึ้น  <span className='text-meduim'>{booking?.pickup_stop}</span></IonLabel>
+                <IonLabel className='text-2xl' color={"dark"} style={{ fontWeight: 600 }} >{booking?.departureTime}</IonLabel> <br />
+                <IonLabel className='text-xs' color={"dark"} >จุดขึ้น  <span className='text-meduim'>{booking?.boardingPoint}</span></IonLabel>
               </div>
               <div className='bg-light-tint ion-padding ion-radius' >
                 <IonLabel className='text-xs' color={"dark"} >รถถึงปลายทาง</IonLabel><br />
-                <IonLabel className='text-2xl' color={"dark"} style={{ fontWeight: 600 }} >{booking?.trip?.arrival_time}</IonLabel> <br />
-                <IonLabel className='text-xs' color={"dark"} >จุดลง  <span className='text-meduim'>{booking?.dropoff_stop}</span></IonLabel>
+                <IonLabel className='text-2xl' color={"dark"} style={{ fontWeight: 600 }} >{booking?.arrivalTime}</IonLabel> <br />
+                <IonLabel className='text-xs' color={"dark"} >จุดลง  <span className='text-meduim'>{booking?.dropOffPoint}</span></IonLabel>
               </div>
               <div className='col-span-2 bg-light-tint ion-padding ion-radius' >
                 {
-                  booking?.tickets.map((p: any) =>
-                    <IonLabel key={p.id} className='text-2xl' color={"dark"} style={{ fontWeight: 600 }} > {p.seat_number} </IonLabel>
+                  booking?.passengers.map((p) =>
+                    <IonLabel key={p.seatNumber} className='text-2xl' color={"dark"} style={{ fontWeight: 600 }} > {p.seatNumber} </IonLabel>
                   )
                 }
                 <br /> <IonLabel className='text-xs text-meduim' color={"dark"} >ที่นั่งของผู้โดยสาร</IonLabel>
@@ -323,10 +328,11 @@ const TicketDetail: React.FC = () => {
                 borderWidth: "1px", borderStyle: "dashed", borderColor: "var(--ion-color-primary)"
               }}
               onClick={() => {
-                calltoCustomer(booking?.phone, booking?.tickets?.[0]);
+                const phone = booking?.passengers[0]?.phone;
+                if (phone) calltoCustomer(phone, booking?.tickets?.[0]);
               }}
             >
-              <IonText color={"primary"} > โทรติดต่อผู้โดยสาร: {booking?.phone}</IonText>
+              <IonText color={"primary"} > โทรติดต่อผู้โดยสาร: {booking?.passengers[0]?.phone}</IonText>
             </button>
           </BouceAnimation><br />
           <BouceAnimation duration={0.4} delay={0.5} >
@@ -338,11 +344,15 @@ const TicketDetail: React.FC = () => {
 
               <IonList>
                 {
-                  booking?.tickets.map((p: any) =>
-                    <IonItem key={p.id} className='  ion-text-wrap' onClick={() => { actionPassenger(p) }} >
+                  booking?.passengers.map((p) =>
+                    <IonItem key={p.seatNumber} className='  ion-text-wrap' onClick={() => {
+                      // Map passenger to a ticket for the action sheet
+                      const ticket = booking.tickets.find(t => t.seat_number === p.seatNumber);
+                      if (ticket) actionPassenger(ticket);
+                    }} >
                       <IonLabel>
-                        <IonText className='ion-margin-end'>ที่นั่ง {p.seat_number}</IonText> <IonText> ชื่อ {p.passenger_name}</IonText> <br />
-                        หมายเลขโทรศัพท์  {p.passenger_phone}
+                        <IonText className='ion-margin-end'>ที่นั่ง {p.seatNumber}</IonText> <IonText> ชื่อ {p.fullName}</IonText> <br />
+                        หมายเลขโทรศัพท์  {p.phone}
                       </IonLabel>
                     </IonItem>
                   )
@@ -354,7 +364,7 @@ const TicketDetail: React.FC = () => {
           <div className='bottom-div' >
             <IonButton expand='block' mode='ios' className=" text-light rounded-4xl" style={{ color: "#FFF" }}
               onClick={checkInAll}
-              disabled={booking?.tickets.every((t: any) => !!t.checked_in_at)}
+              disabled={booking?.tickets.every((t: Ticket) => !!t.checked_in_at)}
             >
               เช็คอินผู้โดยสารทั้งหมด
             </IonButton>
