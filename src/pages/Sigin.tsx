@@ -1,238 +1,150 @@
-import { IonButton, IonCheckbox, IonContent, IonImg, IonInput, IonItem, IonLabel, IonList, IonPage } from "@ionic/react";
+import { IonButton, IonCheckbox, IonContent, IonImg, IonInput, IonItem, IonLabel, IonList, IonPage, IonIcon } from "@ionic/react";
 import React, { useState, useEffect } from 'react';
-import Select from 'react-select';
-import type { StylesConfig } from 'react-select';
+import { personOutline, lockClosedOutline, eyeOutline, eyeOffOutline } from 'ionicons/icons';
 import "./css/Signin.css";
 import { driverLogin } from "../http/api";
-import { supabase } from "../supabase/supabase";
 import moment from "moment";
 
-interface DriverLoginResponse {
-    token?: string;
-    accessToken?: string;
-    access_token?: string;
-    driver?: unknown;
-    user?: unknown;
-    [key: string]: unknown;
-}
-
-interface SelectOption {
-    value: string;
-    label: string;
-}
-
-const selectMenuStyles: StylesConfig<SelectOption, false> = {
-    menuPortal: base => ({ ...base, zIndex: 9999 }),
-    menu: base => ({
-        ...base,
-        zIndex: 9999,
-        backgroundColor: '#1c1c1e', // Dark background for the menu
-    }),
-    option: (base, { isFocused, isSelected }) => ({
-        ...base,
-        backgroundColor: isSelected
-            ? '#3a3a3c'
-            : isFocused
-                ? '#2c2c2e'
-                : '#1c1c1e',
-        color: '#ffffff',
-        cursor: 'pointer',
-        ':active': {
-            backgroundColor: '#3a3a3c',
-        },
-    }),
-    control: base => ({
-        ...base,
-        backgroundColor: 'transparent',
-        border: 'none',
-        boxShadow: 'none',
-    }),
-    singleValue: base => ({
-        ...base,
-        color: '#000000', // Keep single value black if the background is still light
-    }),
-    input: base => ({
-        ...base,
-        color: '#000000',
-    }),
-    placeholder: base => ({
-        ...base,
-        color: '#9ca3af',
-    })
-};
-
-const DRIVER_PHONE_OPTIONS = [
-    '0997874156',
-    '0812345678',
-    '0865552211',
-];
-type Driver = {
-    id: string
-    name: string
-    license_number: string
-    phone: string
-    is_active: boolean,
-    created_at: string,
-    email: string | null,
-    password_hash: string | null
-}
 const Sigin: React.FC = () => {
-    const [phone, setPhone] = useState("");
-    const [licenseNumber, setLicenseNumber] = useState("");
-    const [drivers, setDrivers] = useState<Driver[]>([]);
-    const [driver, setDriver] = useState<Driver | null>(null);
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
-    const menuPortalTarget = typeof window !== 'undefined' ? document.body : null;
-
-    const driverOptions: SelectOption[] = drivers.map(driver => ({
-        value: driver.id,
-        label: driver.name,
-    }));
-
-    const phoneOptions: SelectOption[] = DRIVER_PHONE_OPTIONS.map(option => ({
-        value: option,
-        label: option,
-    }));
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
-        const savedPhone = localStorage.getItem('savedDriverPhone');
-        const savedLicenseNumber = localStorage.getItem('savedLicenseNumber');
+        const savedUsername = localStorage.getItem('savedUsername');
+        const savedPassword = localStorage.getItem('savedPassword'); // Caution: saving password in plain text is not ideal, but following common "remember me" pattern if requested
         const savedRememberMe = localStorage.getItem('rememberMe') === 'true';
 
         setRememberMe(savedRememberMe);
         if (savedRememberMe) {
-            if (savedPhone) setPhone(savedPhone);
-            if (savedLicenseNumber) setLicenseNumber(savedLicenseNumber);
+            if (savedUsername) setUsername(savedUsername);
+            if (savedPassword) setPassword(savedPassword);
         }
-
-        const conf = async () => {
-            const { data: dlist, error } = await supabase.from('drivers').select('*');
-            if (error) {
-                console.error("Error fetching drivers:", error);
-                return;
-            }
-
-            console.log("drivers", dlist);
-            setDrivers(dlist || []);
-
-            // If we have a saved phone, try to find and set the driver object
-            if (savedRememberMe && savedPhone) {
-                const foundDriver = (dlist || []).find((d: Driver) => d.phone === savedPhone);
-                if (foundDriver) {
-                    setDriver(foundDriver);
-                }
-            }
-        }
-        conf();
     }, []);
 
     const doLogin = async () => {
+        if (!username || !password) {
+            // Add validation toast or message if needed
+            return;
+        }
+
+        setIsLoading(true);
         try {
             const body = {
-                phone: phone,
-                licenseNumber: licenseNumber
+                username: username,
+                password: password
             }
 
-            const loginres: { token: string, driver: any } = await driverLogin(body)
+            const loginres = await driverLogin(body)
             console.log("loginres", loginres);
 
             if (rememberMe) {
-                localStorage.setItem('savedDriverPhone', phone);
-                localStorage.setItem('savedLicenseNumber', licenseNumber);
+                localStorage.setItem('savedUsername', username);
+                localStorage.setItem('savedPassword', password);
                 localStorage.setItem('rememberMe', 'true');
             } else {
-                localStorage.removeItem('savedDriverPhone');
-                localStorage.removeItem('savedLicenseNumber');
+                localStorage.removeItem('savedUsername');
+                localStorage.removeItem('savedPassword');
                 localStorage.setItem('rememberMe', 'false');
             }
 
             localStorage.setItem('isAuthenticated', "true");
             localStorage.setItem('role', 'driver');
-            if (loginres?.token) {
+
+            if (loginres?.token || loginres?.access_token) {
+                const token = loginres.access_token || loginres.token;
                 localStorage.setItem('session',
-                    JSON.stringify({ access_token: loginres?.token, expires_in: moment().add(1, 'hour').format(), driver: loginres?.driver }));
+                    JSON.stringify({
+                        access_token: token,
+                        refresh_token: loginres.refresh_token,
+                        expires_in: moment().add(1, 'hour').format(),
+                        driver: loginres.driver || loginres.user
+                    }));
                 window.location.href = '/home';
             } else {
                 localStorage.removeItem('session');
             }
         } catch (error) {
             console.error("Login error:", error);
+            // Show error message to user
+        } finally {
+            setIsLoading(false);
         }
     };
 
     return (
         <IonPage>
-            <IonContent className=" flex items-center justify-center bg-white min-h-screen">
-                <div
-                    className="w-full max-w-md p-6 rounded-lg shadow-md bg-gray-50 ion-padding"
-                    style={{ backgroundImage: 'url(../assets/svg/bus-seat.svg)', backgroundSize: 'cover', backgroundPosition: 'center', height: "100%" }}
-                >
+            <IonContent scrollY={false} style={{ '--overflow': 'hidden', 'height': '100%' }}>
+                <div className="signin-container">
+                    <div className="signin-background-shape"></div>
 
-                    <div className="grid  ion-padding"><br /><br /><br /><br />
-                        <div className="logo-section w-full flex items-center" style={{ flexDirection: "column", marginBottom: "3rem" }} >
-                            <IonImg src="../assets/svg/logo.svg" style={{ width: "30vw", maxWidth: "200px" }} /> <br />
-                            <span className="text-sm font-semibold text-gray-800 " style={{ color: "black" }}> เข้าสู่ระบบเพื่อจัดการเที่ยวการเดินทาง</span>
+                    <div className="signin-card">
+                        <div className="logo-section">
+                            <IonImg src="../assets/svg/logo.svg" className="logo-img" />
+                            <span className="welcome-text">ยินดีต้อนรับ</span>
+                            <span className="subtitle-text">เข้าสู่ระบบเพื่อจัดการเที่ยวการเดินทาง</span>
                         </div>
-                        <IonList className="form-input-sigin" >
-                            <IonItem className="signin-item" lines="none" style={{ borderBottom: "1px solid #e9e8e8" }} >
-                                <IonLabel position="stacked" className="signin-label  " style={{ marginLeft: ".5rem", marginBottom: ".5rem" }} > <small>เลือกผู้ขับขี่</small> </IonLabel>
-                                <Select
-                                    className="signin-react-select"
-                                    classNamePrefix="signin-input"
-                                    options={driverOptions}
-                                    value={driverOptions.find(option => option.value === driver?.id) || null}
-                                    onChange={selected => {
-                                        const foundDriver = drivers.find(d => d.id === selected?.value) || null;
-                                        setDriver(foundDriver);
-                                        if (foundDriver) {
-                                            setPhone(foundDriver.phone);
-                                            setLicenseNumber(foundDriver.license_number);
-                                        }
-                                    }}
-                                    isSearchable
-                                    placeholder="เลือกผู้ขับขี่"
-                                    menuPortalTarget={menuPortalTarget}
-                                    menuPosition="fixed"
-                                    styles={selectMenuStyles}
+
+                        <IonList className="form-list" lines="none">
+                            <IonItem className="modern-input-item">
+                                <IonIcon icon={personOutline} slot="start" className="input-icon" />
+                                <IonInput
+                                    value={username}
+                                    type="text"
+                                    placeholder="ชื่อผู้ใช้งาน / เบอร์โทร"
+                                    className="modern-input"
+                                    onIonChange={e => setUsername(String(e.detail.value || ''))}
                                 />
                             </IonItem>
-                            <IonItem lines="none" style={{ borderBottom: "1px solid #DDD" }} >
+
+                            <IonItem className="modern-input-item">
+                                <IonIcon icon={lockClosedOutline} slot="start" className="input-icon" />
                                 <IonInput
-                                    value={phone}
-                                    type="text" label="เบอร์โทร"
-                                    placeholder="00-000-0000"
-                                    label-placement="stacked"
-                                    mode="ios" className="signin-ion-input"
-                                    onIonChange={e =>
-                                        setPhone(String(e.detail.value || ''))}
-                                ></IonInput>
-                            </IonItem>
-                            <IonItem lines="none"  >
-                                <IonInput
-                                    value={licenseNumber} label-placement="stacked"
-                                    type="text" label="หมายเลขใบขับขี่"
-                                    placeholder="DL-000-000"
-                                    mode="ios" className="signin-ion-input"
-                                    onIonChange={e => setLicenseNumber(String(e.detail.value || ''))}
-                                ></IonInput>
+                                    value={password}
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="รหัสผ่าน"
+                                    className="modern-input"
+                                    onIonChange={e => setPassword(String(e.detail.value || ''))}
+                                />
+                                <IonIcon
+                                    icon={showPassword ? eyeOffOutline : eyeOutline}
+                                    slot="end"
+                                    className="input-icon cursor-pointer"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    style={{ cursor: 'pointer' }}
+                                />
                             </IonItem>
                         </IonList>
-                        <IonItem lines="none" color={"transparent"} className="remember-me-item">
-                            <IonCheckbox
-                                slot="start"
-                                checked={rememberMe}
-                                onIonChange={e => setRememberMe(e.detail.checked)}
-                                mode="ios"
-                            />
-                            <IonLabel>จดจำฉันในระบบ</IonLabel>
-                        </IonItem><br />
 
-                        <div className="mt-2">
-                            <IonButton expand="block" mode="ios" onClick={doLogin} className="bg-blue-600">
-                                <span style={{ color: "white" }} >เข้าสู่ระบบ</span>
-                            </IonButton>
+                        <div className="remember-section">
+                            <div className="flex items-center">
+                                <IonCheckbox
+                                    checked={rememberMe}
+                                    onIonChange={e => setRememberMe(e.detail.checked)}
+                                    className="remember-checkbox"
+                                    mode="ios"
+                                />
+                                <IonLabel className="remember-label">จดจำฉันไว้</IonLabel>
+                            </div>
+                            <a href="#" className="forgot-link">ลืมรหัสผ่าน?</a>
                         </div>
 
+                        <IonButton
+                            expand="block"
+                            onClick={doLogin} color={"primary"}
+                            className="login-button"
+                            disabled={isLoading}
+                        >
+                            {isLoading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
+                        </IonButton>
+
+                        <div className="mt-8 text-center">
+                            <p className="text-sm text-gray-500">
+                                ยังไม่มีบัญชี? <a href="#" className="text-blue-600 font-semibold">ติดต่อผู้ดูแล</a>
+                            </p>
+                        </div>
                     </div>
                 </div>
             </IonContent>

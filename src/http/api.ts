@@ -10,8 +10,28 @@ export const apiClient = axios.create({
 });
 
 export interface DriverLoginPayload {
-	phone: string;
-	licenseNumber: string;
+	username: string;
+	password: string;
+}
+
+export interface DriverLoginResponse {
+	token: string;
+	access_token: string;
+	refresh_token: string;
+	user: {
+		id: string;
+		username: string;
+		fullName: string;
+		phone: string;
+		email: string;
+		avatarUrl: string;
+	};
+	driver: {
+		id: string;
+		name: string;
+		phone: string;
+		licenseNumber: string;
+	};
 }
 
 export interface DriverCheckInPayload {
@@ -23,8 +43,10 @@ const getAuthorizationHeader = (token: string) => ({
 	Authorization: `Bearer ${token}`,
 });
 
-export const driverLogin = async <T = unknown>(payload: DriverLoginPayload): Promise<T> => {
-	const response = await apiClient.post<T>("/driver/login", payload);
+export const driverLogin = async (
+	payload: DriverLoginPayload,
+): Promise<DriverLoginResponse> => {
+	const response = await apiClient.post<DriverLoginResponse>("/driver/login", payload);
 	return response.data;
 };
 
@@ -64,5 +86,56 @@ export const getBookingDetail = async <T = unknown>(id: string, token: string): 
 		headers: getAuthorizationHeader(token),
 	});
 
+	return response.data;
+};
+
+export interface DriverMeResponse {
+	driver: {
+		id: string;
+		name: string;
+		license_number: string;
+		phone: string;
+		is_active: boolean;
+		earning_per_round: number;
+		notes: string | null;
+		updated_at: string;
+	};
+	user: {
+		id: string;
+		username: string;
+		email: string | null;
+		full_name: string;
+		phone: string;
+		avatar_url: string | null;
+	};
+	today_rounds_count: number;
+	today_earnings: number;
+	today_window_start: string;
+	today_window_end: string;
+	current_shift: unknown | null;
+	alerts: unknown[];
+}
+
+export const getDriverMe = async (token: string): Promise<DriverMeResponse> => {
+	const response = await apiClient.get<DriverMeResponse>("/driver/me", {
+		headers: getAuthorizationHeader(token),
+	});
+	return response.data;
+};
+
+export interface UpdateDriverMePayload {
+	name?: string;
+	phone?: string;
+	current_password?: string;
+	new_password?: string;
+}
+
+export const updateDriverMe = async (
+	payload: UpdateDriverMePayload,
+	token: string,
+): Promise<DriverMeResponse> => {
+	const response = await apiClient.patch<DriverMeResponse>("/driver/me", payload, {
+		headers: getAuthorizationHeader(token),
+	});
 	return response.data;
 };

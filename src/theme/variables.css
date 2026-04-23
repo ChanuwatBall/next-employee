@@ -46,10 +46,10 @@ http://ionicframework.com/docs/theming/ */
 
     --ion-background-color: #ffffff;
 
-    --ion-color-success: #15803D;
+    --ion-color-success: #25b058;
     --ion-color-success-rgb: 21, 128, 61;
-    --ion-color-success-tint: #1e8449;
-    --ion-color-success-shade: #116c2e;
+    --ion-color-success-tint: #4eb574;
+    --ion-color-success-shade: #15843e;
 }
 
 /* body{
