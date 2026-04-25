@@ -139,3 +139,19 @@ export const updateDriverMe = async (
 	});
 	return response.data;
 };
+
+export interface ShiftStartPayload {
+	trip_id: string;
+	vehicle_id: string;
+	start_km: number;
+	start_mileage: number;
+	start_battery: number;
+}
+
+export interface ShiftStopPayload {
+	stop_km: number;
+	stop_mileage: number;
+	stop_battery: number;
+	notes: string;
+}
+

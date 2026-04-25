@@ -1,9 +1,241 @@
-.card-trip {
-    border-radius: 1.3rem;
-    border: 1px solid var(--ion-color-light-tint);
-    padding: 1em;
-    padding-bottom: 0;
-    background-color: var(--ion-color-light);
+/* Dashboard Premium Styling */
+.dashboard-hero {
+    background: linear-gradient(135deg, var(--ion-color-primary) 0%, var(--ion-color-primary) 70%, #1e40af 100%);
+    color: white;
+    padding-bottom: 30px;
+    border-bottom-left-radius: 40px;
+    border-bottom-right-radius: 40px;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dashboard-hero.scrolled {
+    min-height: 80px;
+    padding-top: env(safe-area-inset-top) !important;
+    padding-bottom: 12px !important;
+    border-radius: 0 0 24px 24px;
+}
+
+.dashboard-hero.scrolled .greeting-container {
+    opacity: 0;
+    max-height: 0;
+    margin-bottom: 0;
+    overflow: hidden;
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+.dashboard-hero.scrolled .stats-dashboard {
+    margin-top: 5px !important;
+    gap: 8px;
+    transition: all 0.4s ease;
+}
+
+.dashboard-hero.scrolled .stat-card {
+    padding: 5px 10px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+}
+
+.dashboard-hero.scrolled .stat-label {
+    font-size: 0.7rem;
+    margin-bottom: 0;
+    opacity: 0.8;
+}
+
+.dashboard-hero.scrolled .stat-value {
+    font-size: 1.1rem !important;
+}
+
+.dashboard-hero.scrolled .stat-progress {
+    display: none;
+}
+
+.avatar-mini {
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.3s ease;
+}
+
+.dashboard-hero.scrolled .avatar-mini {
+    width: 32px;
+    height: 32px;
+}
+
+.avatar-mini img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.stat-card.glass {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 20px 15px;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+}
+
+.stat-card.glass.shadow-sm {
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    opacity: 0.9;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-label.larger {
+    font-size: 1rem;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.stat-value.larger {
+    font-size: 2rem;
+}
+
+.stat-card ion-progress-bar {
+    height: 6px;
+    border-radius: 10px;
+    --background: rgba(255, 255, 255, 0.2);
+    --progress-background: white;
+}
+
+.dashboard-content {
+    --background: #f8fafc;
+}
+
+@media (prefers-color-scheme: dark) {
+    .dashboard-content {
+        --background: #23262b;
+    }
+}
+
+.active-shift-card {
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.05));
+    border-radius: 1.5rem;
+    overflow: hidden;
+}
+
+.section-header h3 {
+    color: #1e293b;
+    font-size: 1.1rem;
+}
+
+.activity-item {
+    transition: transform 0.2s;
+}
+
+.activity-item:active {
+    transform: scale(0.98);
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+/* Action Buttons Grid */
+.action-button-card {
+    background: var(--ion-color-white);
+    padding: 13px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f1f5f9;
+    transition: all 0.2s;
+}
+
+.action-button-card:active {
+    transform: scale(0.96);
+    background: #f8fafc;
+}
+
+.action-icon {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.action-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.action-title {
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 1rem;
+}
+
+.action-sub {
+    font-size: 0.60rem;
+    color: #64748b;
+    margin-top: 1px;
+}
+
+/* Highlighted Action Button */
+.action-button-card.highlight {
+    background: var(--ion-color-primary);
+    border: none;
+    box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
+}
+
+.action-button-card .action-title {
+    color: var(--ion-color-dark);
+}
+
+.action-button-card.highlight .action-title {
+    color: #FFF;
+}
+
+.action-button-card.highlight .action-sub {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.action-button-card.highlight .action-icon {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
 }
 
 ion-searchbar.search-trip {
@@ -13,6 +245,91 @@ ion-searchbar.search-trip {
     max-height: 3rem !important;
     border: 1px solid var(--ion-color-primary) !important;
     border-radius: 1.5rem;
+}
+
+
+.bus-tag {
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.status-badge {
+    --padding-start: 10px;
+    --padding-end: 10px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    border-radius: 8px;
+}
+
+.route-visual {
+    padding: 0 10px;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.dot.start {
+    background-color: var(--ion-color-primary);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.dot.end {
+    background-color: var(--ion-color-success);
+    box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1);
+}
+
+.line-dashed {
+    height: 2px;
+    background-image: linear-gradient(to right, #cbd5e1 50%, rgba(255, 255, 255, 0) 0%);
+    background-position: bottom;
+    background-size: 8px 2px;
+    background-repeat: repeat-x;
+}
+
+.bus-icon {
+    font-size: 0.9rem;
+    margin: 0 4px;
+}
+
+.trip-footer h4 {
+    font-size: 0.95rem;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.passenger-info {
+    color: #475569;
+}
+
+.action-btn-main {
+    --border-radius: 12px;
+    font-weight: 700;
+    margin: 0;
+}
+
+/* Empty State Container */
+.empty-trips-container {
+    text-align: center;
+    padding: 40px 20px;
+    background: var(--ion-color-white);
+    border-radius: 32px;
+    border: 2px dashed #e2e8f0;
+    margin-top: 16px;
+}
+
+.empty-trips-icon {
+    font-size: 3rem;
+    color: #f1f5f9;
+    margin-bottom: 16px;
+}
+
+.empty-trips-text {
+    color: #94a3b8;
+    font-weight: 500;
+    margin-bottom: 16px;
 }
 
 .no-scrollbar::-webkit-scrollbar {

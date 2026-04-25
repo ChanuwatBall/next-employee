@@ -18,6 +18,8 @@ import Trips from './pages/Trips';
 import TripDetail from './pages/TripDetail';
 import TicketDetail from './pages/TicketDetail';
 import Sigin from './pages/Sigin';
+import ShiftHistory from './pages/ShiftHistory';
+import CustomTabBar from './components/CustomTabBar';
 import React, { useEffect, useState } from 'react';
 import { supabase } from './supabase/supabase';
 
@@ -53,7 +55,7 @@ import '@ionic/react/css/palettes/dark.system.css';
 import './theme/variables.css';
 import PlanChair from './pages/PlanChair';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faQrcode } from '@fortawesome/free-solid-svg-icons';
+import { faBusSide, faClipboardList, faQrcode } from '@fortawesome/free-solid-svg-icons';
 import { faHouse, faUser } from '@fortawesome/free-regular-svg-icons';
 
 setupIonicReact();
@@ -195,29 +197,14 @@ const App: React.FC = () => {
             <Route path="/ticket/:id">
               {isAuthenticated ? <TicketDetail /> : <Redirect to="/signin" />}
             </Route>
+            <Route path="/shift-history">
+              {isAuthenticated ? <ShiftHistory /> : <Redirect to="/signin" />}
+            </Route>
             <Route exact path="/">
               <Redirect to={isAuthenticated ? '/home' : '/signin'} />
             </Route>
           </IonRouterOutlet>
-          {isAuthenticated && (
-            <IonTabBar slot="bottom" className='main-tab'>
-              <IonTabButton tab="tab1" href="/home">
-              <FontAwesomeIcon icon={faHouse} />
-                {/* <IonIcon aria-hidden="true" icon={home} /> */}
-                <IonLabel>Home</IonLabel>
-              </IonTabButton>
-              <IonTabButton tab="tab2" href="/scanQrPage">
-              <FontAwesomeIcon icon={faQrcode} />
-                {/* <IonIcon aria-hidden="true" icon={ellipse} /> */}
-                <IonLabel>Scan</IonLabel>
-              </IonTabButton>
-              <IonTabButton tab="tab3" href="/profile">
-              <FontAwesomeIcon icon={faUser} />
-                {/* <IonIcon aria-hidden="true" icon={square} /> */}
-                <IonLabel>Profile</IonLabel>
-              </IonTabButton>
-            </IonTabBar>
-          )}
+          {isAuthenticated && <CustomTabBar />}
         </IonTabs>
       </IonReactRouter>
     </IonApp>

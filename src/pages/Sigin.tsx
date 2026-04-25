@@ -92,7 +92,7 @@ const Sigin: React.FC = () => {
                                 <IonIcon icon={personOutline} slot="start" className="input-icon" />
                                 <IonInput
                                     value={username}
-                                    type="text"
+                                    type="text" label="Username" labelPlacement="stacked"
                                     placeholder="ชื่อผู้ใช้งาน / เบอร์โทร"
                                     className="modern-input"
                                     onIonChange={e => setUsername(String(e.detail.value || ''))}
@@ -102,7 +102,7 @@ const Sigin: React.FC = () => {
                             <IonItem className="modern-input-item">
                                 <IonIcon icon={lockClosedOutline} slot="start" className="input-icon" />
                                 <IonInput
-                                    value={password}
+                                    value={password} label="Password" labelPlacement="stacked"
                                     type={showPassword ? "text" : "password"}
                                     placeholder="รหัสผ่าน"
                                     className="modern-input"

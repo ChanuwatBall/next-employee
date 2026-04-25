@@ -1,6 +1,8 @@
 {
   "appId": "at.next.employee",
   "appName": "NextEmployee",
+  "versionCode": 3,
+  "versionName": "0.0.3",
   "bundledWebRuntime": false,
   "webDir": "dist",
   "plugins": {}

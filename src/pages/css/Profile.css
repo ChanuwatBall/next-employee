@@ -1,22 +1,24 @@
-
 .avatar-container {
-    position: relative;
-    display: inline-block;
+  position: relative;
+  display: inline-block;
 }
+
 .avatar-container ion-button {
-    position: absolute;
-    bottom: 0px;
-    right: 0px; 
+  position: absolute;
+  bottom: 0px;
+  right: 0px;
 }
+
 .avatarimg {
   width: 8rem;
-  height: 8rem; 
+  height: 8rem;
   object-fit: cover;
-  border-radius:  20px;
+  border-radius: 20px;
 }
+
 .line-bottom-dashed {
   border-bottom: 1px dashed var(--ion-color-light-shade);
-  padding: .8rem 0 .5rem 0 ;
+  padding: .8rem 0 .5rem 0;
 }
 
 /* New accessible minimal styles */
@@ -84,8 +86,14 @@
   font-weight: 600;
   color: white;
 }
-.status.active { background: var(--success); }
-.status.inactive { background: #9ca3af; }
+
+.status.active {
+  background: var(--success);
+}
+
+.status.inactive {
+  background: #9ca3af;
+}
 
 .hero-text .name {
   font-size: 28px;
@@ -93,6 +101,7 @@
   font-weight: 700;
   color: #0f172a;
 }
+
 .hero-text .username {
   margin: 4px 0 0 0;
   color: var(--muted);
@@ -104,19 +113,27 @@
   gap: 12px;
   justify-content: space-between;
 }
+
 .stat {
   flex: 1 1 50%;
   background: var(--card-bg);
   padding: 12px;
   border-radius: 12px;
-  text-align: center;
+  text-align: left;
 }
+
 .stat-value {
   font-size: 26px;
   font-weight: 800;
   color: #0f172a;
+  margin: 3px 0 5px;
 }
-.stat-label { font-size: 14px; color: var(--muted); margin-top: 6px; }
+
+.stat-label {
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: 6px;
+}
 
 .info.simple-card {
   background: var(--card-bg);
@@ -126,34 +143,91 @@
   flex-direction: column;
   gap: 10px;
 }
-.info-row { display: flex; justify-content: space-between; align-items: center; }
-.info-row .label { font-size: 16px; color: var(--muted); }
-.info-row .value { font-size: 18px; font-weight: 700; color: #0f172a; }
 
-.logout-wrap { margin-top: 6px; }
-.logout-btn { --padding-top: 14px; --padding-bottom: 14px; font-size: 18px; }
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
-.large { font-size: 18px; }
-.xlarge { font-size: 28px; font-weight: 800; }
+.info-row .label {
+  font-size: 16px;
+  color: var(--muted);
+}
+
+.info-row .value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.logout-wrap {
+  margin-top: 6px;
+}
+
+.logout-btn {
+  --padding-top: 14px;
+  --padding-bottom: 14px;
+  font-size: 18px;
+}
+
+.large {
+  font-size: 18px;
+}
+
+.xlarge {
+  font-size: 28px;
+  font-weight: 800;
+}
 
 @media (max-width: 420px) {
-  .hero { gap: 12px; }
-  .avatar-wrap, .avatar-img img, .avatar-letter { width: 80px; height: 80px; }
-  .avatar-letter { font-size: 36px; }
-  .hero-text .name { font-size: 22px; }
-  .stat-value { font-size: 22px; }
+  .hero {
+    gap: 12px;
+  }
+
+  .avatar-wrap,
+  .avatar-img img,
+  .avatar-letter {
+    width: 80px;
+    height: 80px;
+  }
+
+  .avatar-letter {
+    font-size: 36px;
+  }
+
+  .hero-text .name {
+    font-size: 22px;
+  }
+
+  .stat-value {
+    font-size: 22px;
+  }
 }
 
 /* Ionic input styling and form tweaks */
-.form-label { font-size: 16px; color: #374151; }
+.form-label {
+  font-size: 16px;
+  color: #374151;
+}
+
 .large-input {
   --padding-start: 10px;
   --padding-end: 10px;
   font-size: 20px;
 }
-.large-item { padding: 6px 0; }
-.large-item ion-input { width: 100%; }
-.simple-card { box-shadow: none; }
+
+.large-item {
+  padding: 6px 0;
+}
+
+.large-item ion-input {
+  width: 100%;
+}
+
+.simple-card {
+  box-shadow: none;
+}
 
 .large-item ion-input::part(native) {
   font-size: 20px;
@@ -164,7 +238,8 @@ ion-input.large-input input {
   padding: 10px !important;
 }
 
-.profile-error , .profile-loading{
+.profile-error,
+.profile-loading {
   width: 100vw;
   display: flex;
   align-items: center;

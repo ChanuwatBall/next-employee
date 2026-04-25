@@ -1,0 +1,105 @@
+.custom-tab-bar-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    pointer-events: none;
+    /* Let clicks through unless on the bar */
+    padding-bottom: env(safe-area-inset-bottom);
+    background: transparent;
+}
+
+.custom-tab-bar {
+    pointer-events: auto;
+    height: 70px;
+    background: var(--ion-color-white);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 24px 24px 0 0;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+    padding: 0 10px;
+    position: relative;
+    overflow: visible;
+}
+
+.tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
+}
+
+.tab-item.active {
+    color: var(--ion-color-primary);
+}
+
+.tab-icon-wrapper {
+    font-size: 1.25rem;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+}
+
+.tab-item.active .tab-icon-wrapper {
+    transform: translateY(-2px);
+}
+
+.tab-label {
+    font-size: 0.6rem;
+    font-weight: 400;
+    letter-spacing: 0.2px;
+}
+
+/* Floating Action Button (Scan) */
+.fab-item {
+    position: relative;
+    overflow: visible;
+}
+
+.fab-item .tab-icon-wrapper {
+    background: var(--ion-color-primary);
+    color: #fff;
+    width: 4.5rem;
+    height: 4.5rem;
+    border-radius: 50%;
+    position: absolute;
+    top: -45px;
+    /* Adjust this to control how high it floats */
+    left: 50%;
+    transform: translateX(-50%);
+    border: 8px solid var(--ion-color-white);
+    /* box-shadow: 0 8px 25px rgba(227, 32, 59, 0.4); */
+    font-size: 1.6rem;
+    margin-bottom: 0;
+    z-index: 1001;
+}
+
+.fab-item.active .tab-icon-wrapper {
+    transform: translateX(-50%) translateY(-2px);
+    box-shadow: 0 12px 30px rgba(227, 32, 59, 0.5);
+}
+
+.fab-item .tab-icon-wrapper:active {
+    transform: translateX(-50%) scale(0.9);
+}
+
+@media (prefers-color-scheme: dark) {
+    .custom-tab-bar {
+        border-top-color: rgba(255, 255, 255, 0.05);
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
+    }
+}
+
+.tab-bar-padding {
+    padding-bottom: calc(85px + env(safe-area-inset-bottom)) !important;
+}

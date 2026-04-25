@@ -1,19 +1,24 @@
 import { faArrowDown, faArrowLeft, faArrowRight, faArrowUp, faCarSide, faLocationDot, faQrcode } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonButton, IonGrid, IonRow, IonCol, IonText, IonBackButton, IonLabel, IonIcon, IonChip, IonAccordion, IonAccordionGroup, IonBadge } from '@ionic/react';
+import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonButton, IonGrid, IonRow, IonCol, IonText, IonBackButton, IonLabel, IonIcon, IonChip, IonAccordion, IonAccordionGroup, IonBadge, IonModal, IonItem, IonInput, IonList, IonLoading, IonToast, IonTextarea, IonRefresher, IonRefresherContent } from '@ionic/react';
+import { speedometerOutline, batteryChargingOutline, documentTextOutline } from 'ionicons/icons';
 import moment, { duration } from 'moment';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import './css/TripDetail.css';
 import { BouceAnimation } from '../components/Animations';
 import { supabase } from '../supabase/supabase';
 
 import { Trip } from '../types/trip';
-import { getTripSeats } from '../https/api';
+import { getTripSeats, updateDriverLocation, startShift, stopShift } from '../https/api';
 import { getDriverTripPassengers } from '../http/api';
+import { Geolocation } from '@capacitor/geolocation';
+import { ForegroundService } from '@capawesome-team/capacitor-android-foreground-service';
+import { Capacitor } from '@capacitor/core';
 
 interface TripData {
   id: string;
+  bus_number: string;
   date: string;
   departure_time: string;
   arrival_time: string;
@@ -21,6 +26,7 @@ interface TripData {
   bus_type_id: string;
   bus_type: any;
   bus_stops: any[];
+  vehicle_id?: string;
 }
 
 const TripDetail: React.FC = () => {
@@ -28,6 +34,121 @@ const TripDetail: React.FC = () => {
   const history = useHistory();
   const [stationacc, setStationAcc] = React.useState<string>("");
   const [trip, setTrip] = React.useState<TripData | null>(null);
+
+  const [showStartModal, setShowStartModal] = useState(false);
+  const [showStopModal, setShowStopModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
+  const [showToast, setShowToast] = useState(false);
+
+  const [startFormData, setStartFormData] = useState({
+    start_km: 0,
+    start_mileage: 0,
+    start_battery: 100
+  });
+
+  const [watchId, setWatchId] = useState<string | null>(null);
+
+  const [stopFormData, setStopFormData] = useState({
+    stop_km: 0,
+    stop_mileage: 0,
+    stop_battery: 0,
+    notes: ""
+  });
+
+  const handleStartShift = async () => {
+    try {
+      setLoading(true);
+      const payload = {
+        trip_id: id,
+        vehicle_id: null,
+        ...startFormData
+      };
+
+      await startShift(payload);
+
+      setShowStartModal(false);
+      setToastMsg("เริ่มเที่ยวสำเร็จ");
+      setShowToast(true);
+
+      // Start Tracking
+      startTracking();
+    } catch (error) {
+      console.error(error);
+      setToastMsg("เกิดข้อผิดพลาดในการเริ่มเที่ยว");
+      setShowToast(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStopShift = async () => {
+    try {
+      setLoading(true);
+
+      const payload = {
+        ...stopFormData
+      };
+
+      await stopShift(payload);
+      setShowStopModal(false);
+      setToastMsg("จบเที่ยวสำเร็จ");
+      setShowToast(true);
+
+      // Stop Tracking
+      stopTracking();
+    } catch (error) {
+      console.error(error);
+      setToastMsg("เกิดข้อผิดพลาดในการจบเที่ยว");
+      setShowToast(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const startTracking = async () => {
+    try {
+      if (Capacitor.getPlatform() === 'android') {
+        await ForegroundService.startForegroundService({
+          id: 12345,
+          title: "ระบบติดตามพิกัดรถ",
+          body: "กำลังทำงานในเบื้องหลังเพื่อติดตามตำแหน่งรถ",
+          smallIcon: "push_icon",
+        });
+      }
+
+      const id = await Geolocation.watchPosition({
+        enableHighAccuracy: true,
+        timeout: 10000,
+      }, (position, err) => {
+        if (position) {
+          updateDriverLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            speed_kmh: (position.coords.speed || 0) * 3.6,
+            heading_deg: position.coords.heading || 0
+          }).catch(console.error);
+        }
+      });
+      setWatchId(id);
+    } catch (error) {
+      console.error("Tracking error:", error);
+    }
+  };
+
+  const stopTracking = async () => {
+    try {
+      if (watchId) {
+        await Geolocation.clearWatch({ id: watchId });
+        setWatchId(null);
+      }
+      if (Capacitor.getPlatform() === 'android') {
+        await ForegroundService.stopForegroundService();
+      }
+    } catch (error) {
+      console.error("Stop tracking error:", error);
+    }
+  };
 
   const getTrip = async () => {
 
@@ -97,6 +218,9 @@ const TripDetail: React.FC = () => {
         </IonToolbar>
       </IonHeader>
       <IonContent color={"light"} className="ion-no-padding min-h-screen" style={{ position: "relative" }} >
+        <IonRefresher slot="fixed" onIonRefresh={(e) => getTrip().then(() => e.detail.complete())}>
+          <IonRefresherContent />
+        </IonRefresher>
         {trip && <div>
           <div className="grid grid-rows-2   ion-padding-horizontal ion-padding-top bg-primary text-white  ion-padding-bottom  "
             style={{ borderBottomLeftRadius: "3rem", borderBottomRightRadius: "3rem", paddingBottom: "4rem" }} >
@@ -156,7 +280,7 @@ const TripDetail: React.FC = () => {
                 </IonText>
               </div>
               <div>
-                <IonText className='text-xs' color={"medium"} > {trip?.bus_type?.name}</IonText> <br />
+                <IonText className='text-xs' color={"medium"} > ทะเบียนรถ : {trip?.bus_number} {trip?.bus_type?.name}</IonText> <br />
               </div>
               <div>
                 <IonText className='text-xs' color={"medium"} >สิ่งอำนวยความสะดวก : {trip?.bus_type?.amenities.join(", ")}</IonText> <br />
@@ -181,13 +305,136 @@ const TripDetail: React.FC = () => {
               </IonAccordionGroup>
             </BouceAnimation>
           </div>
-          <div className='bottom-div' >
-            <IonButton expand='block' mode='ios' className=" text-light rounded-4xl" style={{ color: "#FFF" }}
+          <div className='bottom-div ion-padding-horizontal' >
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <IonButton expand='block' mode='ios' color="success" className="rounded-xl" onClick={() => setShowStartModal(true)}>
+                เริ่มเที่ยว
+              </IonButton>
+              <IonButton expand='block' mode='ios' color="danger" className="rounded-xl" onClick={() => setShowStopModal(true)}>
+                จบเที่ยว
+              </IonButton>
+            </div>
+            <IonButton expand='block' mode='ios' className="text-light rounded-4xl" style={{ color: "#FFF" }}
               onClick={() => { history.push("/plan/" + trip?.id) }} >
               ที่นั่งทั้งหมด
             </IonButton>
           </div>
           <div style={{ height: "15rem" }} ></div>
+
+          {/* Start Shift Modal */}
+          <IonModal className="custom-modal" isOpen={showStartModal} onDidDismiss={() => setShowStartModal(false)} initialBreakpoint={0.5} breakpoints={[0, 0.5, 0.8]}>
+            <IonHeader className="ion-no-border">
+              <IonToolbar color="success">
+                <IonTitle>เริ่มเที่ยวรถ</IonTitle>
+                <div slot="end" className="ion-padding-end">
+                  <IonButton fill="clear" color="light" onClick={() => setShowStartModal(false)}>ปิด</IonButton>
+                </div>
+              </IonToolbar>
+            </IonHeader>
+            <IonContent className="ion-padding">
+              <IonList className="form-list" lines="none">
+                <IonItem className="modern-input-item">
+                  <IonIcon icon={speedometerOutline} slot="start" className="input-icon" />
+                  <IonInput
+                    type="number" label="เลขไมล์เริ่มต้น (Start KM)"
+                    value={startFormData.start_km} labelPlacement="stacked"
+                    onIonInput={(e) => setStartFormData({ ...startFormData, start_km: Number(e.detail.value) })}
+                    placeholder="เลขไมล์เริ่มต้น (Start KM)"
+                    className="modern-input"
+                  />
+                </IonItem>
+                <IonItem className="modern-input-item">
+                  <IonIcon icon={speedometerOutline} slot="start" className="input-icon" />
+                  <IonInput
+                    type="number" labelPlacement="stacked" label='เลขระยะทางเริ่มต้น'
+                    value={startFormData.start_mileage}
+                    onIonInput={(e) => setStartFormData({ ...startFormData, start_mileage: Number(e.detail.value) })}
+                    placeholder="เลขระยะทางเริ่มต้น (Start Mileage)"
+                    className="modern-input"
+                  />
+                </IonItem>
+                <IonItem className="modern-input-item">
+                  <IonIcon icon={batteryChargingOutline} slot="start" className="input-icon" />
+                  <IonInput
+                    type="number"
+                    value={startFormData.start_battery} labelPlacement="stacked" label='ระดับแบตเตอรี่ (%)'
+                    onIonInput={(e) => setStartFormData({ ...startFormData, start_battery: Number(e.detail.value) })}
+                    placeholder="ระดับแบตเตอรี่ (%)"
+                    className="modern-input"
+                  />
+                </IonItem>
+              </IonList>
+              <div className="ion-padding-top">
+                <IonButton expand="block" color="success" mode="ios" className="login-button" style={{ '--background': 'var(--ion-color-success)' }} onClick={handleStartShift}>
+                  ยืนยันเริ่มเที่ยว
+                </IonButton>
+              </div>
+            </IonContent>
+          </IonModal>
+
+          {/* Stop Shift Modal */}
+          <IonModal className="custom-modal" isOpen={showStopModal} onDidDismiss={() => setShowStopModal(false)} initialBreakpoint={0.6} breakpoints={[0, 0.6, 0.9]}>
+            <IonHeader className="ion-no-border">
+              <IonToolbar color="danger">
+                <IonTitle>จบเที่ยวรถ</IonTitle>
+                <div slot="end" className="ion-padding-end">
+                  <IonButton fill="clear" color="light" onClick={() => setShowStopModal(false)}>ปิด</IonButton>
+                </div>
+              </IonToolbar>
+            </IonHeader>
+            <IonContent className="ion-padding">
+              <IonList className="form-list" lines="none">
+                <IonItem className="modern-input-item">
+                  <IonIcon icon={speedometerOutline} slot="start" className="input-icon" />
+                  <IonInput
+                    type="number" label="เลขไมล์สิ้นสุด (Stop KM)" labelPlacement="stacked"
+                    value={stopFormData.stop_km}
+                    onIonInput={(e) => setStopFormData({ ...stopFormData, stop_km: Number(e.detail.value) })}
+                    placeholder="เลขไมล์สิ้นสุด (Stop KM)"
+                    className="modern-input"
+                  />
+                </IonItem>
+                <IonItem className="modern-input-item">
+                  <IonIcon icon={speedometerOutline} slot="start" className="input-icon" />
+                  <IonInput
+                    type="number" label="เลขระยะทางสิ้นสุด (Stop Mileage)" labelPlacement="stacked"
+                    value={stopFormData.stop_mileage}
+                    onIonInput={(e) => setStopFormData({ ...stopFormData, stop_mileage: Number(e.detail.value) })}
+                    placeholder="เลขระยะทางสิ้นสุด (Stop Mileage)"
+                    className="modern-input"
+                  />
+                </IonItem>
+                <IonItem className="modern-input-item">
+                  <IonIcon icon={batteryChargingOutline} slot="start" className="input-icon" />
+                  <IonInput
+                    type="number" label="ระดับแบตเตอรี่สิ้นสุด (%)" labelPlacement="stacked"
+                    value={stopFormData.stop_battery}
+                    onIonInput={(e) => setStopFormData({ ...stopFormData, stop_battery: Number(e.detail.value) })}
+                    placeholder="ระดับแบตเตอรี่สิ้นสุด (%)"
+                    className="modern-input"
+                  />
+                </IonItem>
+                <IonItem className="modern-input-item">
+                  <IonIcon icon={documentTextOutline} slot="start" className="input-icon" />
+                  <IonTextarea
+                    label="หมายเหตุ (Notes)" labelPlacement="stacked"
+                    value={stopFormData.notes}
+                    onIonInput={(e) => setStopFormData({ ...stopFormData, notes: e.detail.value || "" })}
+                    placeholder="Enter"
+                    className="modern-input"
+                  />
+                </IonItem>
+              </IonList>
+              <div className="ion-padding-top">
+                <IonButton expand="block" color="danger" mode="ios" className="login-button" style={{ '--background': 'var(--ion-color-danger)' }} onClick={handleStopShift}>
+                  ยืนยันจบเที่ยว
+                </IonButton>
+              </div>
+            </IonContent>
+          </IonModal>
+
+          <IonLoading isOpen={loading} message="กำลังบันทึกข้อมูล..." />
+          <IonToast isOpen={showToast} message={toastMsg} duration={2000} onDidDismiss={() => setShowToast(false)} />
         </div>}
       </IonContent>
     </IonPage>

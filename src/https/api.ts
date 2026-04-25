@@ -27,13 +27,6 @@ export const getBookingDetail = async (id: string) => {
   return response.data;
 }
 
-// curl /api/checkin/self \
-//   --request POST \
-//   --header 'Content-Type: application/json' \
-//   --data '{
-//   "ticketNumber": "",
-//   "qrCode": ""
-// }'
 
 export const checkInSelf = async (ticketNumber: string, qrCode: string) => {
   const userstr = localStorage.getItem("session")
@@ -48,6 +41,66 @@ export const checkInSelf = async (ticketNumber: string, qrCode: string) => {
   })
   return response.data;
 }
+
+export const getDriverRounds = async (limit: number = 10, offset: number = 0) => {
+  const userstr = localStorage.getItem("session")
+  const session = userstr ? JSON.parse(userstr) : null;
+  const response = await api.get(`/driver/rounds?limit=${limit}`, {
+    headers: {
+      Authorization: `Bearer ${session?.access_token}`
+    }
+  })
+  console.log("getDriverRounds  ", response.data);
+  return response.data;
+}
+
+
+export interface DriverLocationPayload {
+  latitude: number;
+  longitude: number;
+  speed_kmh: number;
+  heading_deg: number;
+}
+
+export const updateDriverLocation = async (payload: DriverLocationPayload) => {
+  const userstr = localStorage.getItem("session")
+  const session = userstr ? JSON.parse(userstr) : null;
+  const response = await api.post(`/driver/location`, payload, {
+    headers: {
+      Authorization: `Bearer ${session?.access_token}`
+    }
+  });
+  return response.data;
+};
+
+
+export const startShift = async <T = unknown>(
+  payload: any
+) => {
+  const userstr = localStorage.getItem("session")
+  const session = userstr ? JSON.parse(userstr) : null;
+  const response = await api.post("/driver/shift/start", payload, {
+    headers: {
+      Authorization: `Bearer ${session?.access_token}`
+    }
+  });
+
+  return response.data;
+};
+
+export const stopShift = async (
+  payload: any
+) => {
+  const userstr = localStorage.getItem("session")
+  const session = userstr ? JSON.parse(userstr) : null;
+  const response = await api.post("/driver/shift/stop", payload, {
+    headers: {
+      Authorization: `Bearer ${session?.access_token}`
+    }
+  });
+
+  return response.data;
+};
 
 
 export default api;

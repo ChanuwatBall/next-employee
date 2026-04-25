@@ -18,6 +18,9 @@ import {
   IonToolbar,
   useIonLoading,
   useIonToast,
+  IonProgressBar,
+  IonRefresher,
+  IonRefresherContent,
 } from '@ionic/react';
 import React, { useEffect, useState } from 'react';
 import {
@@ -33,6 +36,8 @@ import {
   eyeOutline,
   eyeOffOutline,
   mailOutline,
+  timeOutline,
+  trendingUpOutline,
 } from 'ionicons/icons';
 import { getDriverMe, DriverMeResponse, updateDriverMe } from '../http/api';
 import './css/Profile.css';
@@ -65,6 +70,7 @@ const Profile: React.FC = () => {
         return;
       }
       const result = await getDriverMe(token);
+      console.log("result ", result)
       setData(result);
     } catch (err) {
       console.error('Error fetching profile:', err);
@@ -121,8 +127,8 @@ const Profile: React.FC = () => {
         fetchProfile();
         iontoast({
           message: 'บันทึกข้อมูลเรียบร้อยแล้ว',
-          duration: 2000, color: 'success', 
-          icon: checkmarkCircleOutline ,
+          duration: 2000, color: 'success',
+          icon: checkmarkCircleOutline,
           position: 'top',
         });
       }
@@ -150,6 +156,9 @@ const Profile: React.FC = () => {
       </IonHeader>
 
       <IonContent fullscreen className="ion-padding profile-content">
+        <IonRefresher slot="fixed" onIonRefresh={(e) => fetchProfile().then(() => e.detail.complete())}>
+          <IonRefresherContent />
+        </IonRefresher>
         {loading && (
           <div className="profile-loading">
             <IonSpinner name="crescent" color="primary" />
@@ -165,7 +174,7 @@ const Profile: React.FC = () => {
         )}
 
         {data && data.user && data.driver && !loading && (
-          <div className="profile-container">
+          <div className="profile-container tab-bar-padding">
             <header className="hero">
               <div className="avatar-wrap">
                 {data.user.avatar_url ? (
@@ -186,19 +195,21 @@ const Profile: React.FC = () => {
               </div>
               <div style={{ marginLeft: 'auto' }}>
                 <IonButton size="small" fill='clear' onClick={() => { setShowEditModal(true); setMessage(null); }}>
-                   <Edit/>
+                  <Edit />
                 </IonButton>
               </div>
             </header>
 
             <section className="stats-row">
-              <div className="stat">
-                <div className="stat-value xlarge">{(data.today_rounds_count ?? 0)}</div>
-                <div className="stat-label">เที่ยววันนี้</div>
+              <div className="stat" style={{ paddingBottom: ".5rem" }} >
+                <small style={{ fontSize: ".7em" }}><IonIcon icon={timeOutline} /> รอบวันนี้</small>
+                <div className="stat-value xlarge">{(data.today_rounds_count ?? 0)}/4</div>
+                <IonProgressBar mode='ios' value={(data.today_rounds_count ?? 0) / 4} color="primary" />
               </div>
               <div className="stat">
+                <small style={{ fontSize: ".7em" }}><IonIcon icon={trendingUpOutline} /> รายได้วันนี้</small>
                 <div className="stat-value xlarge">{(data.today_earnings ?? 0).toLocaleString('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 })}</div>
-                <div className="stat-label">รายได้วันนี้</div>
+                {/* <div className="stat-label">รายได้วันนี้</div> */}
               </div>
             </section>
             {message && (
@@ -242,14 +253,14 @@ const Profile: React.FC = () => {
                   <IonItem lines="none" className="modern-input-item">
                     {/* <IonLabel position="stacked" className="form-label">ชื่อ-สกุล</IonLabel> */}
                     <IonIcon icon={personOutline} slot="start" className="input-icon" />
-                    <IonInput value={formName} label='ชื่อ-สกุล'
+                    <IonInput value={formName} label='ชื่อ-สกุล' labelPlacement='stacked'
                       className="modern-input" placeholder='ชื่อ-สกุล' onIonChange={(e) => setFormName((e.detail.value as string) || '')} />
                   </IonItem>
 
                   <IonItem lines="none" className="modern-input-item">
                     {/* <IonLabel position="stacked" className="form-label">เบอร์โทร</IonLabel> */}
                     <IonIcon icon={callOutline} slot="start" className="input-icon" />
-                    <IonInput className="modern-input" label='เบอร์โทร' value={formPhone} placeholder='เบอร์โทร' onIonChange={(e) => setFormPhone((e.detail.value as string) || '')} />
+                    <IonInput className="modern-input" label='เบอร์โทร' labelPlacement='stacked' value={formPhone} placeholder='เบอร์โทร' onIonChange={(e) => setFormPhone((e.detail.value as string) || '')} />
                   </IonItem>
 
                   <IonItem className="modern-input-item">
@@ -257,8 +268,8 @@ const Profile: React.FC = () => {
                     <IonInput
                       value={formCurrentPassword}
                       type={showPassword ? 'text' : 'password'}
-                      placeholder="รหัสผ่านเดิม (ถ้าจะแก้)"
-                      className="modern-input"
+                      placeholder="รหัสผ่านเดิม (ถ้าจะแก้)" labelPlacement='stacked'
+                      className="modern-input" mode='ios'
                       onIonChange={(e) => setFormCurrentPassword((e.detail.value as string) || '')}
                     />
                     <IonIcon
@@ -273,9 +284,9 @@ const Profile: React.FC = () => {
                   <IonItem className="modern-input-item">
                     <IonIcon icon={lockClosedOutline} slot="start" className="input-icon" />
                     <IonInput
-                      value={formNewPassword}
+                      value={formNewPassword} mode='ios'
                       type={showPassword ? 'text' : 'password'}
-                      placeholder="รหัสผ่านใหม่"
+                      placeholder="รหัสผ่านใหม่" labelPlacement='stacked'
                       className="modern-input"
                       onIonChange={(e) => setFormNewPassword((e.detail.value as string) || '')}
                     />

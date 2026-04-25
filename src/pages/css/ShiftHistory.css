@@ -1,0 +1,151 @@
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-bottom: 20px;
+}
+
+.activity-item {
+    background: var(--ion-color-white);
+    padding: 20px;
+    border-radius: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f1f5f9;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition: all 0.2s ease-in-out;
+}
+
+.activity-item:active {
+    transform: scale(0.98);
+}
+
+.activity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.activity-info-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.activity-icon-container {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    background: #eff6ff;
+    color: #2563eb;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+.activity-meta {
+    display: flex;
+    flex-direction: column;
+}
+
+.activity-date {
+    font-weight: 700;
+    color: var(--ion-color-dark);
+    font-size: 1rem;
+}
+
+.activity-time-range {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+.activity-earning-group {
+    text-align: right;
+}
+
+.activity-amount {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: var(--ion-color-primary);
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.status-badge-mini {
+    display: inline-block;
+}
+
+.activity-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    background: #f8fafc;
+    padding: 12px;
+    border-radius: 16px;
+}
+
+.stat-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.stat-box:not(:last-child) {
+    border-right: 1px solid #e2e8f0;
+}
+
+.stat-box-label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    font-weight: 800;
+    color: #94a3b8;
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+}
+
+.stat-box-value {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #475569;
+}
+
+.activity-notes {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: #fffbeb;
+    padding: 10px 12px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    color: #92400e;
+}
+
+.note-icon {
+    margin-top: 2px;
+    color: #d97706;
+}
+
+.empty-state-container {
+    text-align: center;
+    padding: 60px 40px;
+    background: var(--ion-color-white);
+    border-radius: 40px;
+    border: 2px dashed #e2e8f0;
+}
+
+.empty-state-icon {
+    font-size: 3rem;
+    color: #f1f5f9;
+    margin-bottom: 20px;
+}
+
+.empty-state-text {
+    font-weight: 600;
+    color: #94a3b8;
+}

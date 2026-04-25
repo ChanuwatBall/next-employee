@@ -1,7 +1,7 @@
-import { IonChip, IonContent, IonHeader, IonLabel, IonLoading, IonPage, IonSearchbar, IonSegment, IonSegmentButton, IonText, IonToolbar, IonButton } from '@ionic/react';
+import { IonChip, IonContent, IonHeader, IonLabel, IonLoading, IonPage, IonSearchbar, IonSegment, IonSegmentButton, IonText, IonToolbar, IonButton, IonProgressBar, IonBadge, IonRefresher, IonRefresherContent } from '@ionic/react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faQrcode } from '@fortawesome/free-solid-svg-icons'
+import { faBus, faCarSide, faClipboardList, faQrcode, faUser, faArrowsRotate } from '@fortawesome/free-solid-svg-icons'
 import { faClock } from '@fortawesome/free-regular-svg-icons'
 import { useHistory } from 'react-router-dom';
 
@@ -12,157 +12,198 @@ import { supabase } from '../supabase/supabase';
 moment.locale('th'); // set Thai locale for date formatting
 
 import { Trip } from '../types/trip';
-import { getDriverTrips } from '../http/api';
+import { getDriverTrips, getDriverMe, DriverMeResponse } from '../http/api';
+import CardTrip from '../components/CardTrip';
+
 const Home: React.FC = () => {
   const history = useHistory();
   const [query, setQuery] = useState('');
   const [trips, setTrips] = useState<Trip[]>([]);
+  const [driverMe, setDriverMe] = useState<DriverMeResponse | null>(null);
   const [segment, setSegment] = useState<any>('active');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState(moment());
+  const [isScrolled, setIsScrolled] = useState(false);
 
-  const getdriverTrips = async (date: moment.Moment) => {
+  const handleScroll = (ev: CustomEvent<any>) => {
+    if (ev.detail.scrollTop > 40) {
+      if (!isScrolled) setIsScrolled(true);
+    } else {
+      if (isScrolled) setIsScrolled(false);
+    }
+  };
+
+  const doRefresh = async (event: CustomEvent) => {
+    await fetchData(selectedDate);
+    event.detail.complete();
+  };
+
+  const fetchData = async (date: moment.Moment) => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('session') ? JSON.parse(localStorage.getItem('session') || '{}').access_token : null;
-      const tripsData: any[] = await getDriverTrips(date.format('YYYY-MM-DD'), token);
-      console.log("tripsData ", tripsData);
-      setTrips(tripsData);
+      const sessionStr = localStorage.getItem('session');
+      const session = sessionStr ? JSON.parse(sessionStr) : null;
+      const token = session?.access_token;
+
+      if (!token) return;
+
+      const [tripsData, meData] = await Promise.all([
+        getDriverTrips(date.format('YYYY-MM-DD'), token),
+        getDriverMe(token),
+      ]);
+
+      setTrips(tripsData as any[]);
+      setDriverMe(meData);
     } catch (e) {
       console.error(e);
+      setIsLoading(false);
     } finally {
       setIsLoading(false);
     }
   }
 
   useEffect(() => {
-    getdriverTrips(selectedDate);
+    fetchData(selectedDate);
   }, [selectedDate]);
 
   const dates = Array.from({ length: 14 }, (_, i) => moment().subtract(3, 'days').add(i, 'days'));
 
-  const hellotime = (() => {
-    const hour = moment().hour();
-    if (hour < 12) return 'ตอนเช้า';
-    if (hour < 16) return 'ตอนบ่าย';
-    if (hour < 20) return 'ตอนเย็น';
-    return 'ตอนดึก';
-  })();
-
-
-
-  // const tripsFilter = useCallback((trips: Trip[]) => {
-  //   const v = (query || '').trim().toLowerCase();
-  //   if (!v) {
-  //     return trips;
-  //   }
-  //   return trips.filter(t => {
-  //     const title = t.route_id?.id.toLowerCase() || '';
-  //     const time = t.departure_time || '';
-  //     const date = t.date ? moment(t.date).format('DD MMMM YYYY').toLowerCase() : '';
-  //     return title.includes(v) || time.includes(v) || date.includes(v);
-  //   });
-  // }, [query])
-
-
   return (
     <IonPage>
-      <IonHeader className="ion-no-border  " >
-        <IonToolbar className='ion-no-padding' color={"primary"}>
-          <div className="flex justify-between items-center mb-4 ion-padding-horizontal ion-padding-top bg-primary text-white  ion-padding-bottom  "
-            style={{ borderBottomLeftRadius: "2rem", borderBottomRightRadius: "2rem" }}>
-            <div className='ion-padding-bottom'>
-              <IonText color={"light"} >
-                <h2 className="text-xl font-semibold " style={{ color: "#FFF" }} >
-                  สวัสดี {hellotime}
-                </h2>
-              </IonText>
-              <IonText color={"light"} >
-                <div className="text-sm text-gray-500" style={{ color: "#FFF" }}> {moment().format('DD MMMM ,YYYY')} </div>
-              </IonText>
+      <IonHeader className="ion-no-border header-sticky">
+        <IonToolbar className="ion-no-padding dashboard-header" color="primary">
+          <div className={`dashboard-hero ion-padding ${isScrolled ? 'scrolled' : ''}`}>
+            <div className="flex justify-between items-start greeting-container">
+              <div>
+                <IonText color="light">
+                  <h2 className="text-2xl font-bold ion-no-margin greeting-text">
+                    สวัสดี, {driverMe?.user.full_name.split(' ')[0] || 'กัปตัน'}
+                  </h2>
+                </IonText>
+                <IonText color="light">
+                  <p className="text-sm opacity-80 ion-no-margin subtitle-text text-white">
+                    {moment().format('dddd, D MMMM YYYY')}
+                  </p>
+                </IonText>
+              </div>
+              <div className="avatar-mini" onClick={() => history.push('/profile')}>
+                {driverMe?.user.avatar_url ? (
+                  <img src={driverMe.user.avatar_url} alt="avatar" />
+                ) : (
+                  <div className="avatar-placeholder">
+                    {driverMe?.user.full_name.charAt(0) || 'U'}
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="p-2 bg-gray-100 rounded-full text-white shadow flex items-center justify-center  "
-              style={{ width: "3rem", height: "3rem", fontSize: "1.5rem", backgroundColor: "#FFF" }}
-              onClick={() => { history.push("/scanQrPage") }}
-            >
-              <IonText color={"primary"} >
-                <FontAwesomeIcon icon={faQrcode} />
-              </IonText>
+            <br />
+            <div className="stats-dashboard grid grid-cols-2  " style={{ gap: 10 }}>
+              <div className="stat-card glass shadow-sm">
+                <div className="stat-label larger" ><IonText color="light">รอบวันนี้</IonText></div>
+                <div className="stat-value larger"><IonText color="light">{driverMe?.today_rounds_count || 0}/4</IonText></div>
+                <div className="stat-progress">
+                  <IonProgressBar mode="ios" value={(driverMe?.today_rounds_count || 0) / 4} />
+                </div>
+              </div>
+              <div className="stat-card glass shadow-sm">
+                <div className="stat-label larger" ><IonText color="light">รายได้วันนี้</IonText></div>
+                <div className="stat-value larger">
+                  <IonText color="light">{(driverMe?.today_earnings || 0).toLocaleString()} ฿</IonText>
+                </div>
+              </div>
             </div>
           </div>
         </IonToolbar>
       </IonHeader>
-      <IonContent className="ion-padding bg-white min-h-screen"  >
-        <div style={{ width: "100%", height: "100vh", overflowY: "scroll", paddingBottom: "20vh" }} >
-          <br />
-          <IonSearchbar
-            mode='ios'
-            placeholder="ค้นหาเที่ยวรถ..."
-            className='ion-no-padding search-trip'
-            value={query}
-            onIonInput={(e: any) => setQuery(e.detail?.value ?? '')}
-          />
-          <br />
 
-          <div className="flex overflow-x-auto pb-4 no-scrollbar gap-2" style={{ WebkitOverflowScrolling: 'touch' }}>
-            {dates.map((date, index) => {
-              const isSelected = date.isSame(selectedDate, 'day');
-              const isToday = date.isSame(moment(), 'day');
-              return (
-                <div
-                  key={index}
-                  onClick={() => setSelectedDate(date)}
-                  className={`flex flex-col items-center justify-center min-w-[60px] h-[80px] rounded-2xl transition-all duration-200 cursor-pointer ${isSelected ? 'bg-primary text-white shadow-lg scale-105' : 'bg-gray-50 text-gray-400'
-                    }`}
-                >
-                  <span className="text-[10px] font-medium uppercase mb-1">
-                    {date.format('ddd')}
-                  </span>
-                  <span className={`text-xl font-bold ${isSelected ? 'text-white rounded-2xl' : 'text-gray-800'}`}>
-                    {date.format('D')}
-                  </span>
-                  {isToday && !isSelected && (
-                    <div className="w-1 h-1 bg-primary text-white rounded-full mt-1" />
-                  )}
+      <IonContent className="dashboard-content" scrollEvents={true} onIonScroll={handleScroll}>
+        <IonRefresher slot="fixed" onIonRefresh={doRefresh}>
+          <IonRefresherContent />
+        </IonRefresher>
+        <div className="ion-padding tab-bar-padding">
+          {/* Active Round Info if exists */}
+          {!!driverMe?.current_shift && (
+            <div className="active-shift-card ion-margin-bottom">
+              <IonToolbar color="success" className="rounded-t-2xl px-3">
+                <IonText slot="start" color="light" style={{ fontSize: '0.8rem' }}>
+                  กำลังเข้ากะ
+                </IonText>
+              </IonToolbar>
+              <div className="bg-white p-4 rounded-b-2xl shadow-sm border-x border-b">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="font-bold ion-no-margin">เที่ยวปัจจุบันของคุณ</h3>
+                    <p className="text-xs text-gray-500">เริ่มเมื่อ {moment((driverMe.current_shift as any).started_at).format('HH:mm')} น.</p>
+                  </div>
+                  <IonButton size="small" mode="ios" fill="outline" color="success" onClick={() => history.push('/trips')}>
+                    ดูรายละเอียด
+                  </IonButton>
                 </div>
-              );
-            })}
-          </div>
-          <br />
-          <IonSegment mode='ios' value={segment} onIonChange={(e) => setSegment(e.detail.value as any)} className="mb-4">
-            <IonSegmentButton value="active">
-              <IonLabel>เที่ยวปัจจุบัน</IonLabel>
-            </IonSegmentButton>
-            <IonSegmentButton value="ended">
-              <IonLabel>สิ้นสุดแล้ว</IonLabel>
-            </IonSegmentButton>
-          </IonSegment>
+              </div>
+            </div>
+          )}
 
-          {/* <IonList color='transparent'> */}
-          <IonToolbar color={"transparent"}>
-            <IonText className="text-lg font-semibold" slot='start' color={"dark"} >
-              <strong>เที่ยวรถ</strong>
-            </IonText>
-            {/* <IonText className="text-sm  " color={"primary"} slot='end'>ทั้งหมด </IonText> */}
-          </IonToolbar>
-          {trips.map((trip, index) => (
-            <BouceAnimation duration={(index + 2) / 10} className="card-executive" key={trip.tripId}>
-              <CardTrip
-                title={`${trip.origin} - ${trip.destination}`}
-                time={trip.departureTime}
-                arrive={trip.arrivalTime}
-                disabledSeat={0}
-                tripdate={trip.date}
-                passengerOnboard={trip.checkedIn}
-                totalPassenger={trip.totalSeats}
-                isOnBoard={moment(`${trip.date} ${trip?.departureTime}`).isBefore(moment()) && moment(`${trip.date} ${trip?.arrivalTime}`).isAfter(moment())}
-                isEnded={moment(`${trip.date} ${trip?.arrivalTime}`).isBefore(moment())}
-                select={() => history.push(`/trip/${trip.tripId}`)}
-                busNumber={trip.busNumber}
-              />
-            </BouceAnimation>
-          ))}
-          {/* </IonList> */}
+          {/* Main Actions */}
+          <div className="grid grid-cols-2 ion-margin-vertical"  >
+            <div className="action-button-card highlight" style={{ margin: "0 .2rem" }} onClick={() => history.push('/trips')}>
+              <div className="action-icon">
+                <FontAwesomeIcon icon={faBus} />
+              </div>
+              <div className="action-text">
+                <span className="action-title">ดูเที่ยวรถ</span>
+                <span className="action-sub">ผู้โดยสาร/Checkin</span>
+              </div>
+            </div>
+            <div className="action-button-card" onClick={() => history.push('/shift-history')}>
+              <div className="action-icon bg-purple-50 text-purple-600">
+                <FontAwesomeIcon icon={faClipboardList} />
+              </div>
+              <div className="action-text">
+                <span className="action-title" >ประวัติรอบ</span>
+                <span className="action-sub">รายได้ย้อนหลัง</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="section-header flex justify-between items-center mb-2">
+            <h3 className="font-bold ion-no-margin " style={{ color: "var(--ion-color-dark)" }} >เที่ยวรถวันนี้</h3>
+            <div className="flex gap-1">
+              <IonButton size="small" fill="clear" color="medium" onClick={() => fetchData(selectedDate)}>
+                <FontAwesomeIcon icon={faArrowsRotate} style={{ marginRight: '5px' }} /> รีโหลด
+              </IonButton>
+              <IonButton size="small" fill="clear" onClick={() => history.push('/trips')}>ดูทั้งหมด</IonButton>
+            </div>
+          </div>
+
+          {trips.length > 0 ? (
+            trips.map((trip, index) => (
+              <BouceAnimation duration={(index + 2) / 10} className="card-executive" key={trip.tripId}>
+                <CardTrip
+                  title={`${trip.origin} - ${trip.destination}`}
+                  time={trip.departureTime}
+                  arrive={trip.arrivalTime}
+                  tripdate={trip.date}
+                  passengerOnboard={trip.checkedIn}
+                  totalPassenger={trip.totalSeats}
+                  isOnBoard={moment(`${trip.date} ${trip?.departureTime}`).isBefore(moment()) && moment(`${trip.date} ${trip?.arrivalTime}`).isAfter(moment())}
+                  isEnded={moment(`${trip.date} ${trip?.arrivalTime}`).isBefore(moment())}
+                  select={() => history.push(`/trip/${trip.tripId}`)}
+                  busNumber={trip.busNumber}
+                />
+              </BouceAnimation>
+            ))
+          ) : (
+            <div className="empty-trips-container">
+              <FontAwesomeIcon icon={faBus} className="empty-trips-icon" />
+              <p className="empty-trips-text">ไม่มีเที่ยวรถในวันที่เลือก</p>
+              <IonButton size="small" mode="ios" fill="outline" onClick={() => fetchData(selectedDate)}>
+                <FontAwesomeIcon icon={faArrowsRotate} style={{ marginRight: '5px' }} /> กดรีโหลดข้อมูล
+              </IonButton>
+            </div>
+          )}
+          <br /><br /><br />
+          <br /><br /><br />
+          <br /><br /><br />
         </div>
       </IonContent>
       <IonLoading
@@ -175,62 +216,3 @@ const Home: React.FC = () => {
 };
 
 export default Home;
-
-interface CardTripProps {
-  title: string;
-  time: string;
-  arrive: string;
-  disabledSeat?: number;
-  tripdate?: string;
-  passengerOnboard: number;
-  totalPassenger?: number;
-  isOnBoard?: boolean;
-  isEnded?: boolean;
-  select(): void;
-  busNumber?: string;
-}
-
-const CardTrip: React.FC<CardTripProps> = ({ busNumber, title, time, arrive, disabledSeat, tripdate, passengerOnboard, totalPassenger, isOnBoard, isEnded, select }) => {
-  return (
-    <div className="card-trip ion-margin-bottom  bg-white shadow  border-1 border-solid ion-padding-bottom" onClick={() => select()} >
-      <div className="grid grid-cols-3 p-4">
-
-        <div className="text-sm text-gray-500 col-span-2" >
-          <div className="font-medium ion-padding-bottom"  >
-            <IonLabel style={{ fontSize: "large" }}> <b> {title} </b> </IonLabel>
-            <p style={{ color: "#000" }} className='ion-no-margin'> ทะเบียนรถ : {busNumber}</p>
-
-          </div>
-          <IonLabel style={{ fontSize: "medium" }}>
-            <FontAwesomeIcon icon={faClock} /> &nbsp;
-            <IonText>{time} - {arrive}</IonText>
-            <p className="text-xs text-gray-400 mt-4" style={{ marginTop: ".5rem" }} >
-              {tripdate && moment(tripdate).format('DD MMMM YYYY')}
-            </p>
-          </IonLabel>
-        </div>
-        <div className='text-right'>
-          <IonChip color={isEnded ? "medium" : isOnBoard ? "success" : "warning"} className="ion-margin-bottom" >
-            {isEnded ? "สิ้นสุด" : isOnBoard ? "กำลังเดินทาง" : "ยังไม่ถึงเที่ยว"}
-          </IonChip>
-          <p className='text-gray-400' style={{ fontSize: ".7em" }}>ผู้โดยสาร: ({passengerOnboard}/{totalPassenger}) <br />
-            Disabled: {disabledSeat || 0}</p>
-        </div>
-      </div>
-      {!isEnded && isOnBoard && (
-        <div className="px-4 pb-4">
-          <IonButton expand="block" color="success" size="small" mode="ios" className="ion-no-margin" onClick={(e: React.MouseEvent) => { e.stopPropagation(); console.log('Start Trip'); }}>
-            เริ่มเดินทาง
-          </IonButton>
-        </div>
-      )}
-      {isEnded && (
-        <div className="px-4 pb-4">
-          <IonButton expand="block" color="danger" size="small" mode="ios" className="ion-no-margin" onClick={(e: React.MouseEvent) => { e.stopPropagation(); console.log('End Trip'); }}>
-            กดจบเที่ยว
-          </IonButton>
-        </div>
-      )}
-    </div>
-  );
-}

@@ -31,3 +31,54 @@
 .w-100 {
     width: 100%;
 }
+
+/* Modern Input Styles from Signin */
+.modern-input-item {
+    --background: rgba(243, 244, 246, 0.8);
+    --border-radius: 14px;
+    --padding-start: 1rem;
+    --highlight-height: 0;
+    padding: none;
+    margin-bottom: 1.25rem;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.modern-input-item.item-has-focus {
+    border-color: var(--ion-color-primary);
+    --background: #fff;
+    box-shadow: 0 0 0 4px rgba(var(--ion-color-primary-rgb), 0.1);
+}
+
+.modern-input {
+    --padding-top: -0.8rem !important;
+    --padding-bottom: 0.8rem;
+    font-weight: 500;
+}
+
+.modern-input label {
+    margin-top: -.5rem;
+    font-weight: 300;
+}
+
+.input-icon {
+    color: #64748b;
+    margin-right: 0.5rem;
+    font-size: 1.2rem;
+}
+
+.form-list {
+    background: transparent;
+    padding: 0;
+}
+
+/* Custom Modal Style - Floating and Rounded */
+.custom-modal {
+    --border-radius: 28px;
+}
+
+.custom-modal::part(content) {
+    border-radius: 28px;
+    margin: 15px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}

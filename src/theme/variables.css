@@ -3,15 +3,7 @@
 /* For information on how to create your own theme, please refer to:
 http://ionicframework.com/docs/theming/ */
 
-.main-tab svg {
-    width: 20px;
-    height: 20px;
-}
-
-.main-tab ion-label {
-    font-size: 0.65rem;
-    margin-top: 2px;
-}
+/* Tab Bar Custom Styling handled in CustomTabBar.css */
 
 :root {
     --ion-font-family: 'Inter', 'Kanit', system-ui, -apple-system, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
