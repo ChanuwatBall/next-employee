@@ -13,8 +13,9 @@ import { Trip } from '../types/trip';
 import { getTripSeats, updateDriverLocation, startShift, stopShift } from '../https/api';
 import { getDriverTripPassengers } from '../http/api';
 import { Geolocation } from '@capacitor/geolocation';
-import { ForegroundService } from '@capawesome-team/capacitor-android-foreground-service';
+import { ForegroundService, ServiceType } from '@capawesome-team/capacitor-android-foreground-service';
 import { Capacitor } from '@capacitor/core';
+import TripDetailSkeleton from '../components/TripDetailSkeleton';
 
 interface TripData {
   id: string;
@@ -67,6 +68,9 @@ const TripDetail: React.FC = () => {
 
       await startShift(payload);
 
+      // Save active shift status to localStorage
+      localStorage.setItem('active_shift_id', id);
+
       setShowStartModal(false);
       setToastMsg("เริ่มเที่ยวสำเร็จ");
       setShowToast(true);
@@ -91,6 +95,10 @@ const TripDetail: React.FC = () => {
       };
 
       await stopShift(payload);
+      
+      // Clear active shift status
+      localStorage.removeItem('active_shift_id');
+
       setShowStopModal(false);
       setToastMsg("จบเที่ยวสำเร็จ");
       setShowToast(true);
@@ -109,12 +117,24 @@ const TripDetail: React.FC = () => {
   const startTracking = async () => {
     try {
       if (Capacitor.getPlatform() === 'android') {
+        await ForegroundService.requestPermissions().catch(console.error);
+        await ForegroundService.createNotificationChannel({
+          id: "service_channel",
+          name: "ระบบติดตามเที่ยวรถ",
+          description: "ใช้สำหรับการแจ้งเตือนเมื่อกำลังอยู่ในกะ",
+          importance: 3
+        }).catch(console.error);
+
         await ForegroundService.startForegroundService({
           id: 12345,
-          title: "ระบบติดตามพิกัดรถ",
-          body: "กำลังทำงานในเบื้องหลังเพื่อติดตามตำแหน่งรถ",
-          smallIcon: "push_icon",
-        });
+          title: "กำลังอยู่ในกะ",
+          body: "ระบบติดตามพิกัดรถกำลังทำงานในเบื้องหลัง",
+          smallIcon: "ic_launcher_foreground",
+          notificationChannelId: "service_channel",
+          serviceType: ServiceType.Location,
+        }).catch((er) => {
+          console.log("ForegroundService error ", JSON.stringify(er))
+        })
       }
 
       const id = await Geolocation.watchPosition({
@@ -122,6 +142,7 @@ const TripDetail: React.FC = () => {
         timeout: 10000,
       }, (position, err) => {
         if (position) {
+          console.log("position ", JSON.stringify(position));
           updateDriverLocation({
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
@@ -132,7 +153,7 @@ const TripDetail: React.FC = () => {
       });
       setWatchId(id);
     } catch (error) {
-      console.error("Tracking error:", error);
+      console.error("Tracking error:", JSON.stringify(error));
     }
   };
 
@@ -144,6 +165,9 @@ const TripDetail: React.FC = () => {
       }
       if (Capacitor.getPlatform() === 'android') {
         await ForegroundService.stopForegroundService();
+        await ForegroundService.deleteNotificationChannel({
+          id: 'service_channel',
+        });
       }
     } catch (error) {
       console.error("Stop tracking error:", error);
@@ -201,6 +225,10 @@ const TripDetail: React.FC = () => {
   useEffect(() => {
     getTrip()
   }, [])
+  if (!trip) {
+    return <TripDetailSkeleton />;
+  }
+
   return (
     <IonPage>
       <IonHeader className="ion-no-border  " >
@@ -221,7 +249,7 @@ const TripDetail: React.FC = () => {
         <IonRefresher slot="fixed" onIonRefresh={(e) => getTrip().then(() => e.detail.complete())}>
           <IonRefresherContent />
         </IonRefresher>
-        {trip && <div>
+        <div>
           <div className="grid grid-rows-2   ion-padding-horizontal ion-padding-top bg-primary text-white  ion-padding-bottom  "
             style={{ borderBottomLeftRadius: "3rem", borderBottomRightRadius: "3rem", paddingBottom: "4rem" }} >
 
@@ -435,7 +463,7 @@ const TripDetail: React.FC = () => {
 
           <IonLoading isOpen={loading} message="กำลังบันทึกข้อมูล..." />
           <IonToast isOpen={showToast} message={toastMsg} duration={2000} onDidDismiss={() => setShowToast(false)} />
-        </div>}
+        </div>
       </IonContent>
     </IonPage>
   );

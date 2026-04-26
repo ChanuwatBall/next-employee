@@ -42,6 +42,8 @@ import {
 import { getDriverMe, DriverMeResponse, updateDriverMe } from '../http/api';
 import './css/Profile.css';
 import { Edit } from 'lucide-react';
+import { faBus, faCoins } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 const Profile: React.FC = () => {
   const [data, setData] = useState<DriverMeResponse | null>(null);
@@ -155,7 +157,7 @@ const Profile: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent fullscreen className="ion-padding profile-content">
+      <IonContent fullscreen className="ion-padding profile-content dashboard-content" >
         <IonRefresher slot="fixed" onIonRefresh={(e) => fetchProfile().then(() => e.detail.complete())}>
           <IonRefresherContent />
         </IonRefresher>
@@ -201,13 +203,13 @@ const Profile: React.FC = () => {
             </header>
 
             <section className="stats-row">
-              <div className="stat" style={{ paddingBottom: ".5rem" }} >
-                <small style={{ fontSize: ".7em" }}><IonIcon icon={timeOutline} /> รอบวันนี้</small>
+              <div className="stat trip" style={{ paddingBottom: ".5rem" }} >
+                <small style={{ fontSize: ".7em" }}> <FontAwesomeIcon icon={faBus} size="sm" />&nbsp; รอบวันนี้</small>
                 <div className="stat-value xlarge">{(data.today_rounds_count ?? 0)}/4</div>
                 <IonProgressBar mode='ios' value={(data.today_rounds_count ?? 0) / 4} color="primary" />
               </div>
-              <div className="stat">
-                <small style={{ fontSize: ".7em" }}><IonIcon icon={trendingUpOutline} /> รายได้วันนี้</small>
+              <div className="stat earning">
+                <small style={{ fontSize: ".7em" }}> <FontAwesomeIcon icon={faCoins} size="sm" />&nbsp; รายได้วันนี้</small>
                 <div className="stat-value xlarge">{(data.today_earnings ?? 0).toLocaleString('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 })}</div>
                 {/* <div className="stat-label">รายได้วันนี้</div> */}
               </div>

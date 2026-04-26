@@ -1,0 +1,149 @@
+.trip-detail-skeleton-header {
+  padding: 16px 16px 8px 16px;
+}
+
+.trip-skeleton-hero {
+  background: var(--ion-color-primary);
+  color: white;
+  padding: 16px 20px 64px 20px;
+  border-bottom-left-radius: 3rem;
+  border-bottom-right-radius: 3rem;
+}
+
+.hero-grid-skeleton {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 8px;
+  align-items: center;
+  margin: 0 16px;
+}
+
+.hero-col-left {
+  grid-column: span 5;
+}
+
+.hero-col-center {
+  grid-column: span 2;
+  text-align: center;
+}
+
+.hero-col-right {
+  grid-column: span 5;
+}
+
+.circle-skeleton {
+  width: 20px;
+  height: 20px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+}
+
+.dashed-line-skeleton {
+  width: 80%;
+  height: 2px;
+  border: 1px dashed rgba(255, 255, 255, 0.3);
+  margin: 16px auto 0 auto;
+}
+
+.skeleton-content-container {
+  margin-top: -2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.card-main-skeleton {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  width: 90%;
+  height: 100px;
+}
+
+.card-col-skeleton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-center-skeleton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-info-skeleton {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  margin-top: 24px;
+  width: 90%;
+}
+
+.info-title-skeleton {
+  margin-bottom: 15px;
+}
+
+.list-header-skeleton {
+  width: 90%;
+  margin-top: 24px;
+}
+
+.stop-item-skeleton {
+  background: white;
+  border-radius: 12px;
+  padding: 8px;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 90%;
+  height: 64px;
+}
+
+.item-icon-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f4f4f4;
+  flex-shrink: 0;
+}
+
+.item-text-skeleton {
+  flex: 1;
+}
+
+.item-badges-skeleton {
+  display: flex;
+  gap: 8px;
+}
+
+.badge-mini-skeleton {
+  width: 32px;
+  height: 20px;
+  border-radius: 4px;
+  background: #f4f4f4;
+}
+
+.footer-actions-skeleton {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background: white;
+  padding: 16px;
+  box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.action-grid-skeleton {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}

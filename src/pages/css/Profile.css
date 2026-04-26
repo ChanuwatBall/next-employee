@@ -116,16 +116,25 @@
 
 .stat {
   flex: 1 1 50%;
-  background: var(--card-bg);
   padding: 12px;
   border-radius: 12px;
   text-align: left;
 }
 
+.stat.trip {
+  background-color: rgba(var(--ion-color-primary-rgb), 0.2);
+  color: var(--ion-color-dark);
+}
+
+.stat.earning {
+  background-color: rgba(var(--ion-color-success-rgb), 0.3);
+  color: var(--ion-color-dark);
+}
+
 .stat-value {
   font-size: 26px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--ion-color-dark);
   margin: 3px 0 5px;
 }
 
@@ -247,4 +256,15 @@ ion-input.large-input input {
   flex-direction: row;
   gap: 10px;
 
+}
+
+
+@media (prefers-color-scheme: dark) {
+  .hero-text .name {
+    color: #f0f0f0;
+  }
+
+  .hero-text .username {
+    color: #cdcdcd;
+  }
 }

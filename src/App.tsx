@@ -22,6 +22,8 @@ import ShiftHistory from './pages/ShiftHistory';
 import CustomTabBar from './components/CustomTabBar';
 import React, { useEffect, useState } from 'react';
 import { supabase } from './supabase/supabase';
+import { ForegroundService } from '@capawesome-team/capacitor-android-foreground-service';
+import { Capacitor } from '@capacitor/core';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -80,30 +82,43 @@ const App: React.FC = () => {
 
   const getExpiryFromSession = (session: any): number | null => {
     if (!session) return null;
-    // session.expires_at is usually unix seconds
-    if (session.expires_at) {
-      const val = Number(session.expires_at);
-      if (val > 1e12) return val; // ms
-      return val * 1000; // seconds -> ms
+
+    // 1. Try to find an absolute expiration time
+    const expiry = session.expires_at || session.expires_in;
+    if (expiry) {
+      // Handle ISO strings (like moment().format())
+      if (typeof expiry === 'string') {
+        const parsed = Date.parse(expiry);
+        if (!isNaN(parsed)) return parsed;
+      }
+
+      // Handle numbers
+      const val = Number(expiry);
+      if (!isNaN(val)) {
+        if (val > 1000000000000) return val; // Already in ms
+        if (val > 1000000000) return val * 1000; // Seconds timestamp -> ms
+        // Small numbers are likely durations in seconds; risky without issued_at, 
+        // but fallback to current time + duration.
+        return Date.now() + val * 1000; 
+      }
     }
-    // session.expires_in (seconds from creation)
-    if (session.expires_in) {
-      const val = Number(session.expires_in);
-      if (!Number.isNaN(val)) return Date.now() + val * 1000;
-    }
-    // try decode access_token (JWT) to get exp
+
+    // 2. Fallback: try decode access_token (JWT) to get 'exp' claim
     try {
-      const token = session.access_token || session.refresh_token;
+      const token = session.access_token || session.token;
       if (token) {
         const parts = token.split('.');
         if (parts.length === 3) {
           const payload = JSON.parse(atob(parts[1]));
-          if (payload && payload.exp) return Number(payload.exp) * 1000;
+          if (payload && payload.exp) {
+            return Number(payload.exp) * 1000;
+          }
         }
       }
     } catch (e) {
-      // ignore
+      // ignore decoding errors
     }
+
     return null;
   };
 
@@ -129,20 +144,65 @@ const App: React.FC = () => {
       } catch (e) {
         expiry = null;
       }
+
       if (expiry) {
         const ms = expiry - Date.now();
+        console.log(`[Session] Expires in ${Math.round(ms / 1000 / 60)} minutes (${new Date(expiry).toLocaleTimeString()})`);
+        
         if (ms <= 0) {
+          console.log('[Session] Session expired, logging out...');
           logout();
           return;
         }
+
+        // Set a timer for exact expiry
         timeoutId = window.setTimeout(() => {
+          console.log('[Session] Timer reached, logging out...');
           logout();
         }, ms) as unknown as number;
+      } else {
+        console.log('[Session] No active session expiry found');
       }
     };
 
     // initial setup
     setupTimeoutFromSession();
+
+    // Request permissions and restore service on launch for Android
+    if (Capacitor.getPlatform() === 'android') {
+      // 1. Check/Request Permissions
+      ForegroundService.checkPermissions().then((status) => {
+        if (status.display !== 'granted') {
+          ForegroundService.requestPermissions().catch(console.error);
+        }
+      });
+
+      // 2. Restore Foreground Service if an active shift is detected
+      const activeShiftId = localStorage.getItem('active_shift_id');
+      if (activeShiftId) {
+        console.log(`[ForegroundService] Active shift detected (${activeShiftId}), restoring service...`);
+        
+        ForegroundService.createNotificationChannel({
+          id: "service_channel",
+          name: "ระบบติดตามเที่ยวรถ",
+          description: "ใช้สำหรับการแจ้งเตือนเมื่อกำลังอยู่ในกะ",
+          importance: 3
+        }).then(() => {
+          ForegroundService.startForegroundService({
+            id: 12345,
+            title: "กำลังอยู่ในกะ",
+            body: "ระบบติดตามพิกัดรถกำลังทำงานในเบื้องหลัง",
+            smallIcon: "ic_launcher_foreground",
+            notificationChannelId: "service_channel",
+          }).catch(console.error);
+        }).catch(console.error);
+      }
+    }
+
+    // Periodic check every 60 seconds (backup for throttled timers on mobile)
+    const intervalId = window.setInterval(() => {
+      setupTimeoutFromSession();
+    }, 60000);
 
     // storage event to sync logout/login across tabs
     const onStorage = (e: StorageEvent) => {
@@ -151,12 +211,10 @@ const App: React.FC = () => {
         const auth = localStorage.getItem('isAuthenticated') === 'true';
         setIsAuthenticated(auth);
         if (!auth) {
-          // other tab logged out
           logout();
         }
       }
       if (e.key === 'session') {
-        // session updated in another tab; reset timeout
         setupTimeoutFromSession();
       }
     };
@@ -165,6 +223,7 @@ const App: React.FC = () => {
 
     return () => {
       window.removeEventListener('storage', onStorage);
+      window.clearInterval(intervalId);
       clearExistingTimeout();
     };
   }, []);

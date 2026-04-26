@@ -12,6 +12,7 @@ moment.locale('th');
 import { Trip } from '../types/trip';
 import { getDriverTrips } from '../http/api';
 import CardTrip from '../components/CardTrip';
+import CardTripSkeleton from '../components/CardTripSkeleton';
 
 const Trips: React.FC = () => {
   const history = useHistory();
@@ -27,9 +28,11 @@ const Trips: React.FC = () => {
       const token = localStorage.getItem('session') ? JSON.parse(localStorage.getItem('session') || '{}').access_token : null;
       const tripsData: any[] = await getDriverTrips(date.format('YYYY-MM-DD'), token);
       console.log("tripsData ", tripsData)
+
       setTrips(tripsData);
     } catch (e) {
       console.error(e);
+      setIsLoading(false);
     } finally {
       setIsLoading(false);
     }
@@ -114,29 +117,32 @@ const Trips: React.FC = () => {
             </IonText>
           </div>
 
-          {trips.map((trip, index) => (
-            <BouceAnimation duration={(index + 2) / 10} className="card-executive" key={trip.tripId}>
-              <CardTrip
-                busNumber={trip.busNumber}
-                title={`${trip.origin} - ${trip.destination}`}
-                time={trip.departureTime}
-                arrive={trip.arrivalTime}
-                tripdate={trip.date}
-                passengerOnboard={trip.checkedIn}
-                totalPassenger={trip.totalSeats}
-                isOnBoard={moment(`${trip.date} ${trip?.departureTime}`).isBefore(moment()) && moment(`${trip.date} ${trip?.arrivalTime}`).isAfter(moment())}
-                isEnded={moment(`${trip.date} ${trip?.arrivalTime}`).isBefore(moment())}
-                select={() => history.push(`/trip/${trip.tripId}`)}
-              />
-            </BouceAnimation>
-          ))}
+          {isLoading ? (
+            Array.from({ length: 5 }).map((_, i) => <CardTripSkeleton key={i} />)
+          ) : trips.length > 0 ? (
+            trips.map((trip, index) => (
+              <BouceAnimation duration={(index + 2) / 10} className="card-executive" key={trip.tripId}>
+                <CardTrip
+                  busNumber={trip.busNumber}
+                  title={`${trip.origin} - ${trip.destination}`}
+                  time={trip.departureTime}
+                  arrive={trip.arrivalTime}
+                  tripdate={trip.date}
+                  passengerOnboard={trip.checkedIn}
+                  totalPassenger={trip.totalSeats}
+                  isOnBoard={moment(`${trip.date} ${trip?.departureTime}`).isBefore(moment()) && moment(`${trip.date} ${trip?.arrivalTime}`).isAfter(moment())}
+                  isEnded={moment(`${trip.date} ${trip?.arrivalTime}`).isBefore(moment())}
+                  select={() => history.push(`/trip/${trip.tripId}`)}
+                />
+              </BouceAnimation>
+            ))
+          ) : (
+            <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--ion-color-medium)' }}>
+              ไม่มีข้อมูลเที่ยวรถในวันที่เลือก
+            </div>
+          )}
         </div>
 
-        <IonLoading
-          isOpen={isLoading}
-          onDidDismiss={() => setIsLoading(false)}
-          message="กำลังโหลดข้อมูลเที่ยวรถ..."
-        />
       </IonContent>
     </IonPage>
   );
