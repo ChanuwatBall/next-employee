@@ -1,6 +1,5 @@
 import React, { useMemo, useState, useCallback, useEffect } from "react";
-import { checkInSelf, getTripSeats } from "../https/api";
-import { getDriverTripPassengers } from "../http/api";
+import { checkInSelf, getTripSeats, getDriverTripPassengers } from "../https/api";
 import { useParams, useHistory } from "react-router-dom";
 import {
     IonPage,
@@ -176,9 +175,7 @@ const PlanChair: React.FC = () => {
     const fetchTripAndSeats = async () => {
         setIsLoading(true);
         try {
-            const sessionstr = localStorage.getItem("session");
-            const session = JSON.parse(sessionstr || "{}");
-            const passengers: any[] = await getDriverTripPassengers(id, session.access_token);
+            const passengers: any[] = await getDriverTripPassengers(id);
             console.log("passengers ", passengers);
 
             // Fetch Trip

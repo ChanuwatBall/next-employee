@@ -10,8 +10,8 @@ import { BouceAnimation } from '../components/Animations';
 import { supabase } from '../supabase/supabase';
 
 import { Trip } from '../types/trip';
-import { getTripSeats, updateDriverLocation, startShift, stopShift } from '../https/api';
-import { getDriverTripPassengers } from '../http/api';
+import { getTripSeats, updateDriverLocation, startShift, stopShift, getDriverTripPassengers } from '../https/api';
+
 import { Geolocation } from '@capacitor/geolocation';
 import { ForegroundService, ServiceType } from '@capawesome-team/capacitor-android-foreground-service';
 import { Capacitor } from '@capacitor/core';
@@ -95,7 +95,7 @@ const TripDetail: React.FC = () => {
       };
 
       await stopShift(payload);
-      
+
       // Clear active shift status
       localStorage.removeItem('active_shift_id');
 
@@ -176,9 +176,7 @@ const TripDetail: React.FC = () => {
 
   const getTrip = async () => {
 
-    const sessionstr = localStorage.getItem("session")
-    const session = JSON.parse(sessionstr || "{}")
-    const passengers: any[] = await getDriverTripPassengers(id, session.access_token)
+    const passengers: any[] = await getDriverTripPassengers(id)
     console.log("passengers ", passengers)
 
     const { data, error } = await supabase.from('trips')

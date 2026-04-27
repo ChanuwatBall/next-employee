@@ -76,21 +76,6 @@ const CardTrip: React.FC<CardTripProps> = ({ busNumber, title, time, arrive, dis
                     </div>
                 </div>
             </div>
-
-            {!isEnded && isOnBoard && (
-                <div className="px-4 pb-4">
-                    <IonButton expand="block" color="success" size="small" mode="ios" className="action-btn-main" onClick={(e: React.MouseEvent) => { e.stopPropagation(); console.log('Start Trip'); }}>
-                        เริ่มออกเดินทาง
-                    </IonButton>
-                </div>
-            )}
-            {isEnded && (
-                <div className="px-4 pb-4">
-                    <IonButton expand="block" fill="outline" color="danger" size="small" mode="ios" className="action-btn-main" onClick={(e: React.MouseEvent) => { e.stopPropagation(); console.log('End Trip'); }}>
-                        ปิดงานเที่ยวนี้
-                    </IonButton>
-                </div>
-            )}
         </div>
     );
 }

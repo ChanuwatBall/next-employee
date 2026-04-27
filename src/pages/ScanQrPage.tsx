@@ -61,18 +61,11 @@ const ScanQrPage: React.FC = () => {
   };
 
   const getResult = async (val: any) => {
-    const valueQrCode = val.split("#")
-    if (valueQrCode[0].indexOf("nex-ticket.com") > -1) {
-      const bookingReference = valueQrCode[1];
-      return {
-        result: true,
-        ticketId: bookingReference
-      }
-    } else {
-      return {
-        result: false
-      }
+    return {
+      result: true,
+      ticketId: val
     }
+
   }
   const start = async () => {
     scannedOnce.current = false;

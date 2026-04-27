@@ -9,6 +9,20 @@ const api = axios.create({
  * @param tripId The unique identifier for the trip.
  * @returns An object containing tripId, layout, and seats array.
  */
+export const getDriverTripPassengers = async <T = unknown>(
+  tripId: string
+): Promise<T> => {
+  const userstr = localStorage.getItem("session")
+  const session = userstr ? JSON.parse(userstr) : null;
+  const response = await api.get<T>(`/driver/trips/${tripId}/passengers`, {
+    headers: {
+      Authorization: `Bearer ${session?.access_token}`
+    }
+  });
+
+  return response.data;
+};
+
 export const getTripSeats = async (tripId: string) => {
   const response = await api.get(`/trips/${tripId}/seats`);
   return response.data;
