@@ -38,6 +38,9 @@ import {
   mailOutline,
   timeOutline,
   trendingUpOutline,
+  alertCircleOutline,
+  chevronForwardOutline,
+  headsetOutline,
 } from 'ionicons/icons';
 import { getDriverMe, DriverMeResponse, updateDriverMe } from '../http/api';
 import './css/Profile.css';
@@ -175,34 +178,34 @@ const Profile: React.FC = () => {
           </div>
         )}
 
-        {data && data.user && data.driver && !loading && (
+        {!loading && (
           <div className="profile-container tab-bar-padding">
-            <header className="hero">
+            {data && <header className="hero">
               <div className="avatar-wrap">
-                {data.user.avatar_url ? (
+                {data?.user?.avatar_url ? (
                   <IonAvatar className="avatar-img" style={{ fontSize: '2.2rem' }}>
                     <img src={data.user.avatar_url} alt="avatar" />
                   </IonAvatar>
                 ) : (
                   <div className="avatar-letter">{avatarLetter}</div>
                 )}
-                <div className={`status ${data.driver.is_active ? 'active' : 'inactive'}`}>
-                  {data.driver.is_active ? 'ใช้งานอยู่' : 'ไม่ได้ใช้งาน'}
+                <div className={`status ${data?.driver.is_active ? 'active' : 'inactive'}`}>
+                  {data?.driver.is_active ? 'ใช้งานอยู่' : 'ไม่ได้ใช้งาน'}
                 </div>
               </div>
 
-              <div className="hero-text">
-                <h1 className="name large">{data.user.full_name || data.driver.name}</h1>
-                <p className="username">@{data.user.username}</p>
-              </div>
+              {data && <div className="hero-text">
+                <h1 className="name large">{data?.user?.full_name || data?.driver?.name}</h1>
+                <p className="username">@{data?.user.username}</p>
+              </div>}
               <div style={{ marginLeft: 'auto' }}>
                 <IonButton size="small" fill='clear' onClick={() => { setShowEditModal(true); setMessage(null); }}>
                   <Edit />
                 </IonButton>
               </div>
-            </header>
+            </header>}
 
-            <section className="stats-row">
+            {data && <section className="stats-row">
               <div className="stat trip" style={{ paddingBottom: ".5rem" }} >
                 <small style={{ fontSize: ".7em" }}> <FontAwesomeIcon icon={faBus} size="sm" />&nbsp; รอบวันนี้</small>
                 <div className="stat-value xlarge">{(data.today_rounds_count ?? 0)}/4</div>
@@ -213,12 +216,12 @@ const Profile: React.FC = () => {
                 <div className="stat-value xlarge">{(data.today_earnings ?? 0).toLocaleString('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 })}</div>
                 {/* <div className="stat-label">รายได้วันนี้</div> */}
               </div>
-            </section>
+            </section>}
             {message && (
               <div className="simple-card" style={{ padding: 10, fontSize: 16 }}>{message}</div>
             )}
 
-            <section className="info simple-card">
+            {data && <section className="info simple-card">
               <div className="info-row">
                 <div className="label">ชื่อ-สกุล</div>
                 <div className="value">{data.driver.name}</div>
@@ -239,7 +242,7 @@ const Profile: React.FC = () => {
                 <div className="label">อีเมล</div>
                 <div className="value">{data.user.email || '-'}</div>
               </div>
-            </section>
+            </section>}
 
             <IonModal isOpen={showEditModal} initialBreakpoint={0.8} onDidDismiss={() => setShowEditModal(false)}>
               <IonHeader className='ion-no-border' >
@@ -312,6 +315,31 @@ const Profile: React.FC = () => {
                 </IonList>
               </IonContent>
             </IonModal>
+
+            {/* Help Menu */}
+            <section className="menu-section">
+              <div className="menu-section-title">ช่วยเหลือ</div>
+              <a href="tel:1669" className="menu-item emergency-call-item">
+                <div className="menu-item-icon emergency">
+                  <IonIcon icon={callOutline} />
+                </div>
+                <div className="menu-item-content">
+                  <div className="menu-item-label">โทรฉุกเฉิน</div>
+                  <div className="menu-item-sub">1669 · บริการการแพทย์ฉุกเฉิน</div>
+                </div>
+                <IonIcon icon={chevronForwardOutline} className="menu-item-arrow" />
+              </a>
+              <a href="tel:0800000000" className="menu-item admin-support-item">
+                <div className="menu-item-icon support">
+                  <IonIcon icon={headsetOutline} />
+                </div>
+                <div className="menu-item-content">
+                  <div className="menu-item-label">ติดต่อ Admin Support</div>
+                  <div className="menu-item-sub">080-000-0000 · แจ้งปัญหาการใช้งาน</div>
+                </div>
+                <IonIcon icon={chevronForwardOutline} className="menu-item-arrow" />
+              </a>
+            </section>
 
             <div className="logout-wrap">
               <IonButton mode='ios' expand="block" color="danger" size="large" onClick={doLogout} className="logout-btn">

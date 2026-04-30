@@ -268,3 +268,139 @@ ion-input.large-input input {
     color: #cdcdcd;
   }
 }
+
+/* ── Emergency / Menu Section ──────────────────────────── */
+.menu-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.menu-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-left: 4px;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.menu-item:active {
+  transform: scale(0.98);
+}
+
+.menu-item-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.menu-item-icon.emergency {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+.menu-item-content {
+  flex: 1;
+}
+
+.menu-item-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  line-height: 1.2;
+}
+
+.menu-item-sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.menu-item-arrow {
+  font-size: 18px;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.emergency-call-item {
+  background: #fff5f5;
+  border: 1.5px solid rgba(239, 68, 68, 0.18);
+}
+
+.emergency-call-item:hover,
+.emergency-call-item:active {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.emergency-call-item .menu-item-label {
+  color: #dc2626;
+}
+
+.menu-item-icon.support {
+  background: rgba(59, 130, 246, 0.12);
+  color: #3b82f6;
+}
+
+.admin-support-item {
+  background: #eff6ff;
+  border: 1.5px solid rgba(59, 130, 246, 0.18);
+}
+
+.admin-support-item:hover,
+.admin-support-item:active {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.admin-support-item .menu-item-label {
+  color: #1d4ed8;
+}
+
+@media (prefers-color-scheme: dark) {
+  .menu-section-title {
+    color: #9ca3af;
+  }
+
+  .menu-item-label {
+    color: #f3f4f6;
+  }
+
+  .menu-item-sub {
+    color: #6b7280;
+  }
+
+  .emergency-call-item {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.25);
+  }
+
+  .emergency-call-item .menu-item-label {
+    color: #f87171;
+  }
+
+  .admin-support-item {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.25);
+  }
+
+  .admin-support-item .menu-item-label {
+    color: #93c5fd;
+  }
+}

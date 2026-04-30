@@ -47,7 +47,7 @@ const Trips: React.FC = () => {
     getdriverTrips(selectedDate);
   }, [selectedDate]);
 
-  const dates = Array.from({ length: 14 }, (_, i) => moment().subtract(3, 'days').add(i, 'days'));
+  const dates = Array.from({ length: 30 }, (_, i) => moment().startOf("month").add(i, 'days'));
 
   return (
     <IonPage>

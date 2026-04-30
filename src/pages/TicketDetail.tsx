@@ -154,12 +154,27 @@ const TicketDetail: React.FC = () => {
         const qrDetail = JSON.parse(decoded);
         console.log("Decoded QR Detail:", qrDetail);
 
-        const [passengers, { data: tripData, error: tripError }] = await Promise.all([
-          getDriverTripPassengers(qrDetail.trip) as Promise<any[]>,
-          supabase.from('trips').select('*, route_id(*)').eq('id', qrDetail.trip).single()
-        ]);
+        const passengers: any = await getDriverTripPassengers(qrDetail.trip)
+        const { data: tripData, error: tripError } = await supabase.from('trips').select('*, route_id(*)').eq('id', qrDetail.trip).single()
 
-        if (tripError) throw tripError;
+        console.log("passengers. ", passengers)
+        if (passengers?.error || tripError) {
+          ionalert({
+            header: 'ไม่พบข้อมูลตั๋ว',
+            message: passengers?.error,
+            buttons: [
+              {
+                text: 'ตกลง',
+                role: "cancel",
+                handler: () => {
+                  dimissIonAlert();
+                  history.goBack();
+                }
+              }
+            ]
+          });
+          throw tripError;
+        }
 
         const bookingPassengers = passengers.filter((e: any) => e.bookingReference === qrDetail.bookingReference);
 
@@ -192,7 +207,7 @@ const TicketDetail: React.FC = () => {
         console.error("Fetch error:", e);
         ionalert({
           header: 'ไม่พบข้อมูลตั๋ว',
-          message: 'QR ที่สแกนไม่ถูกต้อง หรือไม่สามารถเชื่อมต่อข้อมูลได้: ' + (e.message || JSON.stringify(e)),
+          message: e.message,
           buttons: [
             {
               text: 'ตกลง',
