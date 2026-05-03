@@ -3,9 +3,7 @@ import {
   IonPage,
   IonHeader,
   IonToolbar,
-  IonTitle,
   IonButtons,
-  IonBackButton,
   IonContent,
   useIonViewDidEnter,
   useIonViewWillLeave,
@@ -16,8 +14,10 @@ import {
 } from "@ionic/react";
 import { BarcodeScanner } from "@capacitor-mlkit/barcode-scanning";
 import "./css/ScanQrPage.css";
-import { arrowBackCircleOutline, ticket } from "ionicons/icons";
-import { useHistory } from "react-router";
+import { arrowBackCircleOutline } from "ionicons/icons";
+import { useHistory, useParams } from "react-router";
+import { getDriverTrips } from "../http/api";
+import moment from "moment";
 
 const setScanningUi = (on: boolean) => {
   const html = document.documentElement;
@@ -39,6 +39,7 @@ const setScanningUi = (on: boolean) => {
 };
 
 const ScanQrPage: React.FC = () => {
+  const { tripId } = useParams<{ tripId?: string }>();
   const [scanning, setScanning] = useState(false);
   const scannedOnce = useRef(false);
   const listenerRef = useRef<any>(null);
@@ -46,27 +47,32 @@ const ScanQrPage: React.FC = () => {
   const [ionalert, dimissIonAlert] = useIonAlert();
 
   const stop = async () => {
-    try {
-      await BarcodeScanner.stopScan();
-    } catch { }
+    try { await BarcodeScanner.stopScan(); } catch { }
     if (listenerRef.current) {
-      try {
-        listenerRef.current.remove();
-      } catch { }
+      try { listenerRef.current.remove(); } catch { }
       listenerRef.current = null;
     }
-    document.querySelector('body')?.classList.remove('barcode-scanner-active');
+    document.querySelector("body")?.classList.remove("barcode-scanner-active");
     setScanningUi(false);
     setScanning(false);
   };
 
-  const getResult = async (val: any) => {
-    return {
-      result: true,
-      ticketId: val
-    }
+  /** Show an alert that resets scannedOnce so the user can scan again */
+  const alertAndRetry = (header: string, message: string) => {
+    ionalert({
+      header,
+      message,
+      buttons: [{
+        text: "ตกลง",
+        role: "cancel",
+        handler: () => {
+          scannedOnce.current = false;
+          dimissIonAlert();
+        }
+      }]
+    });
+  };
 
-  }
   const start = async () => {
     scannedOnce.current = false;
 
@@ -75,11 +81,11 @@ const ScanQrPage: React.FC = () => {
 
     setScanningUi(true);
     setScanning(true);
-    document.querySelector('body')?.classList.add('barcode-scanner-active');
+    document.querySelector("body")?.classList.add("barcode-scanner-active");
 
     try {
       await BarcodeScanner.startScan();
-    } catch (e) {
+    } catch {
       setScanningUi(false);
       setScanning(false);
       return;
@@ -90,45 +96,62 @@ const ScanQrPage: React.FC = () => {
       const code = event.barcodes?.[0]?.rawValue;
       if (!code) return;
       scannedOnce.current = true;
-      const res = await getResult(code);
-      if (res.result) {
-        history.push(`/ticket/${res.ticketId}`);
-        await stop();
-      } else {
-        ionalert({
-          header: 'ไม่พบข้อมูลตั๋ว',
-          message: 'QR ที่สแกนไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง',
-          buttons: [
-            {
-              text: 'ตกลง',
-              role: "cancel",
-              handler: () => {
-                dimissIonAlert();
-              }
-            }
-          ]
-        })
+
+      // ── Decode QR payload ──────────────────────────────────────────────
+      let qrDetail: any = null;
+      try {
+        qrDetail = JSON.parse(atob(code));
+        console.log("[ScanQr] qrDetail:", qrDetail);
+      } catch {
+        alertAndRetry("QR ไม่ถูกต้อง", "ไม่สามารถอ่านข้อมูล QR ได้ กรุณาลองใหม่อีกครั้ง");
+        return;
       }
-      // await stop();
-      // alert(code);
+
+      const scannedTripId: string = qrDetail?.trip ?? "";
+
+      // ── Case 1: tripId param exists → validate against it ──────────────
+      if (tripId) {
+        if (tripId !== scannedTripId) {
+          alertAndRetry("เที่ยวรถไม่ถูกต้อง", "QR ที่สแกนไม่ตรงกับเที่ยวนี้ กรุณาลองใหม่อีกครั้ง");
+          return;
+        }
+        history.push(`/ticket/${code}`);
+        await stop();
+        return;
+      }
+
+      // ── Case 2: no tripId param → check against today's driver trips ───
+      try {
+        const sessionStr = localStorage.getItem("session");
+        const token: string = sessionStr ? JSON.parse(sessionStr)?.access_token : "";
+        const today = moment().format("YYYY-MM-DD");
+
+        const trips = await getDriverTrips<any[]>(today, token);
+        const matched = Array.isArray(trips) && trips.find((t: any) => t.tripId === scannedTripId);
+
+        if (matched) {
+          history.push(`/ticket/${code}`);
+          await stop();
+        } else {
+          alertAndRetry("ไม่พบเที่ยวรถ", "QR นี้ไม่ตรงกับเที่ยวรถของคุณวันนี้ กรุณาตรวจสอบอีกครั้ง");
+        }
+      } catch (err) {
+        console.error("[ScanQr] getDriverTrips error:", err);
+        alertAndRetry("เกิดข้อผิดพลาด", "ไม่สามารถตรวจสอบข้อมูลเที่ยวรถได้ กรุณาลองใหม่");
+      }
     });
   };
 
-  useIonViewDidEnter(() => {
-    start();
-  });
-
-  useIonViewWillLeave(() => {
-    stop();
-  });
+  useIonViewDidEnter(() => { start(); });
+  useIonViewWillLeave(() => { stop(); });
 
   return (
     <IonPage className={scanning ? "scanning " : ""}>
       <IonHeader mode="md" className={scanning ? "scanning ion-no-border" : "ion-no-border"}>
         <IonToolbar className={scanning ? "scanning" : ""}>
           <IonButtons slot="start">
-            <IonButton color="dark" onClick={() => { history.goBack() }} >
-              <IonIcon icon={arrowBackCircleOutline} /> &nbsp;&nbsp;&nbsp;&nbsp;
+            <IonButton color="dark" onClick={() => history.goBack()}>
+              <IonIcon icon={arrowBackCircleOutline} />&nbsp;&nbsp;&nbsp;&nbsp;
               <IonText className="text-lg">สแกน QR ตั๋ว</IonText>
             </IonButton>
           </IonButtons>
@@ -138,9 +161,7 @@ const ScanQrPage: React.FC = () => {
       <IonContent fullscreen className={scanning ? "scanning" : ""}>
         {scanning && (
           <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
-            <div
-              className="scan-frame"
-            />
+            <div className="scan-frame" />
           </div>
         )}
       </IonContent>

@@ -99,7 +99,7 @@ const App: React.FC = () => {
         if (val > 1000000000) return val * 1000; // Seconds timestamp -> ms
         // Small numbers are likely durations in seconds; risky without issued_at, 
         // but fallback to current time + duration.
-        return Date.now() + val * 1000; 
+        return Date.now() + val * 1000;
       }
     }
 
@@ -147,8 +147,8 @@ const App: React.FC = () => {
 
       if (expiry) {
         const ms = expiry - Date.now();
-        console.log(`[Session] Expires in ${Math.round(ms / 1000 / 60)} minutes (${new Date(expiry).toLocaleTimeString()})`);
-        
+        // console.log(`[Session] Expires in ${Math.round(ms / 1000 / 60)} minutes (${new Date(expiry).toLocaleTimeString()})`);
+
         if (ms <= 0) {
           console.log('[Session] Session expired, logging out...');
           logout();
@@ -181,7 +181,7 @@ const App: React.FC = () => {
       const activeShiftId = localStorage.getItem('active_shift_id');
       if (activeShiftId) {
         console.log(`[ForegroundService] Active shift detected (${activeShiftId}), restoring service...`);
-        
+
         ForegroundService.createNotificationChannel({
           id: "service_channel",
           name: "ระบบติดตามเที่ยวรถ",
@@ -258,6 +258,9 @@ const App: React.FC = () => {
             </Route>
             <Route path="/shift-history">
               {isAuthenticated ? <ShiftHistory /> : <Redirect to="/signin" />}
+            </Route>
+            <Route path="/scan-qr/:tripId">
+              {isAuthenticated ? <ScanQrPage /> : <Redirect to="/signin" />}
             </Route>
             <Route exact path="/">
               <Redirect to={isAuthenticated ? '/home' : '/signin'} />

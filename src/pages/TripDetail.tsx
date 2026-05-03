@@ -1,7 +1,7 @@
 import { faArrowDown, faArrowLeft, faArrowRight, faArrowUp, faCarSide, faLocationDot, faQrcode } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonButton, IonGrid, IonRow, IonCol, IonText, IonBackButton, IonLabel, IonIcon, IonChip, IonAccordion, IonAccordionGroup, IonBadge, IonModal, IonItem, IonInput, IonList, IonLoading, IonToast, IonTextarea, IonRefresher, IonRefresherContent } from '@ionic/react';
-import { speedometerOutline, batteryChargingOutline, documentTextOutline } from 'ionicons/icons';
+import { speedometerOutline, batteryChargingOutline, documentTextOutline, qrCodeOutline, giftOutline } from 'ionicons/icons';
 import moment, { duration } from 'moment';
 import React, { useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
@@ -239,8 +239,12 @@ const TripDetail: React.FC = () => {
                 <IonText  >Trip Details</IonText>
               </IonButton>
             </div>
-
           </div>
+          <IonButton slot='end' fill='clear' className='ion-padding-top '
+            onClick={() => { history.push("/scan-qr/" + trip?.id) }}
+            style={{ color: "#FFF", fontSize: "1.2rem" }} >
+            <FontAwesomeIcon icon={faQrcode} />
+          </IonButton>
         </IonToolbar>
       </IonHeader>
       <IonContent color={"light"} className="ion-no-padding min-h-screen" style={{ position: "relative" }} >
@@ -296,20 +300,29 @@ const TripDetail: React.FC = () => {
                 </p>
               </div>
             </BouceAnimation>
-            <br /><br />
+            <br />
 
-            <BouceAnimation duration={0.4} delay={0.2} className='card-stations bg-white grid grid-rows-3 gap-4 shadow-md  rounded-lg p-4  shadow-md ion-padding '  >
+            <BouceAnimation duration={0.3} delay={0.15} className='card-stations bonus-card'>
+              <div className="bonus-shine"></div>
+              <div className="bonus-icon-container">
+                <IonIcon icon={giftOutline} className="bonus-icon" />
+              </div>
+              <div className="bonus-text-container">
+                {/* <span className="bonus-title">ภารกิจพิเศษ (Special Bonus)</span> */}
+                <span className="bonus-amount">จบเที่ยวนี้  รับเงินค่าเที่ยว 500 บาท</span>
+              </div>
+            </BouceAnimation>
+
+            <BouceAnimation duration={0.4} delay={0.2} className='card-stations bg-white grid grid-rows-2  shadow-md  rounded-lg p-4  shadow-md ion-padding '  >
               <div>
                 <IonText color={"primary"}>
                   <FontAwesomeIcon icon={faCarSide} className='text-md ' />
                   <IonText className='ion-margin-start' color={"dark"}>ข้อมูลรถบัส</IonText>
                 </IonText>
               </div>
-              <div>
-                <IonText className='text-xs' color={"medium"} > ทะเบียนรถ : {trip?.bus_number} {trip?.bus_type?.name}</IonText> <br />
-              </div>
-              <div>
-                <IonText className='text-xs' color={"medium"} >สิ่งอำนวยความสะดวก : {trip?.bus_type?.amenities.join(", ")}</IonText> <br />
+              <div className="flex flex-col ">
+                <IonText className='text-xs' color={"medium"} ><strong> ทะเบียนรถ :</strong> {trip?.bus_number} {trip?.bus_type?.name}</IonText>
+                <IonText className='text-xs' color={"medium"} ><strong>สิ่งอำนวยความสะดวก :</strong> {trip?.bus_type?.amenities.join(", ")}</IonText>
               </div>
             </BouceAnimation>
 
@@ -329,17 +342,24 @@ const TripDetail: React.FC = () => {
                   <StationTrip key={station.id} station={station} />
                 ))}
               </IonAccordionGroup>
-            </BouceAnimation>
+            </BouceAnimation><br />
+
+            <div style={{ width: "100%" }} >
+              <BouceAnimation duration={0.4} delay={0.5} className='ion-text-left ion-padding' style={{ width: "100%" }}  >
+                <IonButton expand='block' mode='ios' color="success" className="rounded-xl" onClick={() => setShowStartModal(true)}>
+                  เริ่มเที่ยว
+                </IonButton>
+                <IonButton expand='block' mode='ios' color="danger" className="rounded-xl" onClick={() => setShowStopModal(true)}>
+                  จบเที่ยว
+                </IonButton><br />
+                <IonButton expand='block' fill='outline' mode='ios' color="danger" className="rounded-xl"
+                  onClick={() => { history.push("/scan-qr/" + trip?.id) }} >
+                  Scan QR Code
+                </IonButton>
+              </BouceAnimation>
+            </div>
           </div>
           <div className='bottom-div ion-padding-horizontal' >
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <IonButton expand='block' mode='ios' color="success" className="rounded-xl" onClick={() => setShowStartModal(true)}>
-                เริ่มเที่ยว
-              </IonButton>
-              <IonButton expand='block' mode='ios' color="danger" className="rounded-xl" onClick={() => setShowStopModal(true)}>
-                จบเที่ยว
-              </IonButton>
-            </div>
             <IonButton expand='block' mode='ios' className="text-light rounded-4xl" style={{ color: "#FFF" }}
               onClick={() => { history.push("/plan/" + trip?.id) }} >
               ที่นั่งทั้งหมด
@@ -493,15 +513,6 @@ const StationTrip: React.FC<{ station: any }> = ({ station }) => {
           <IonBadge color={"danger"} className='text-sm' mode='ios' >
             <IonText> {station.passengerOffboard}</IonText>
           </IonBadge>
-          {/* <IonChip color={"tertiary"} >
-            <IonLabel className='text-2xs text-dark' >
-              <FontAwesomeIcon icon={faArrowUp} className='text-dark' />
-              {station.passengerOnboard}
-            </IonLabel>&nbsp;
-            <IonLabel className='text-2xs text-dark' >
-              <FontAwesomeIcon icon={faArrowDown} className='text-dark' />
-              {station.passengerOffboard}  </IonLabel>
-          </IonChip> */}
         </div>
       </div>
       <div slot='content' className='ion-padding' >

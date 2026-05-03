@@ -82,3 +82,68 @@
     margin: 15px;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 }
+
+/* Bonus Notification Card */
+.bonus-card {
+    background: linear-gradient(135deg, #FFB75E 0%, #ED8F03 100%);
+    color: white;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    position: relative;
+    overflow: hidden;
+    padding: 1rem;
+    border-radius: 1rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.bonus-shine {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 70%);
+    transform: translate(30%, -30%);
+    border-radius: 50%;
+}
+
+.bonus-icon-container {
+    background-color: rgba(255, 255, 255, 0.25);
+    border-radius: 50%;
+    min-width: 3rem;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    z-index: 1;
+}
+
+.bonus-icon {
+    font-size: 28px;
+    color: white;
+}
+
+.bonus-text-container {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    width: 100%;
+    z-index: 1;
+}
+
+.bonus-title {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.95);
+    margin-bottom: 0.1rem;
+}
+
+.bonus-amount {
+    font-size: 1rem;
+    font-weight: 800;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}

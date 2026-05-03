@@ -434,3 +434,59 @@ ion-searchbar.search-trip {
 .rounded-2xl {
     border-radius: 15px !important;
 }
+
+/* Alert Notification Card */
+.alert-card {
+    background: var(--ion-color-white);
+    border-radius: 20px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f1f5f9;
+    border-left: 4px solid var(--ion-color-warning, #ffc409);
+    margin-bottom: 16px;
+    transition: all 0.2s ease;
+}
+
+.alert-icon-container {
+    background: rgba(255, 196, 9, 0.15);
+    color: var(--ion-color-warning, #ffc409);
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.alert-content {
+    flex: 1;
+}
+
+.alert-title {
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+.alert-note {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-top: 2px;
+    margin-bottom: 0;
+}
+
+.alert-time {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    margin-top: 6px;
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}

@@ -1,7 +1,7 @@
-import { IonChip, IonContent, IonHeader, IonLabel, IonLoading, IonPage, IonSearchbar, IonSegment, IonSegmentButton, IonText, IonToolbar, IonButton, IonProgressBar, IonBadge, IonRefresher, IonRefresherContent, IonSkeletonText, useIonViewWillEnter } from '@ionic/react';
+import { IonChip, IonContent, IonHeader, IonLabel, IonLoading, IonPage, IonSearchbar, IonSegment, IonSegmentButton, IonText, IonToolbar, IonButton, IonProgressBar, IonBadge, IonRefresher, IonRefresherContent, IonSkeletonText, useIonViewWillEnter, IonModal, IonTitle, IonButtons } from '@ionic/react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faBus, faCarSide, faClipboardList, faQrcode, faUser, faArrowsRotate, faBusSide, faCoins } from '@fortawesome/free-solid-svg-icons'
+import { faBus, faCarSide, faClipboardList, faQrcode, faUser, faArrowsRotate, faBusSide, faCoins, faCircleExclamation } from '@fortawesome/free-solid-svg-icons'
 import { faClock } from '@fortawesome/free-regular-svg-icons'
 import { useHistory } from 'react-router-dom';
 
@@ -26,9 +26,10 @@ const Home: React.FC = () => {
   const [driverMe, setDriverMe] = useState<DriverMeResponse | null>(null);
   const [segment, setSegment] = useState<any>('active');
   const [isLoading, setIsLoading] = useState(false);
-  const [totalStats, setTotalStats] = useState({ total_earnings: 0, earning_per_round: 0 });
+  const [totalStats, setTotalStats] = useState<any>({ alerts: [], total_earnings: 0, earning_per_round: 0 });
   const [selectedDate, setSelectedDate] = useState(moment());
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showAlertModal, setShowAlertModal] = useState(false);
 
   const handleScroll = (ev: CustomEvent<any>) => {
     if (ev.detail.scrollTop > 40) {
@@ -55,7 +56,7 @@ const Home: React.FC = () => {
       const [tripsData, meData, roundsData] = await Promise.all([
         getDriverTrips(date.format('YYYY-MM-DD'), token),
         getDriverMe(token),
-        getDriverRounds(1),
+        getDriverRounds(10),
       ]);
       console.log("roundsData ", roundsData);
       setTrips(tripsData as any[]);
@@ -69,8 +70,9 @@ const Home: React.FC = () => {
       }
 
       setTotalStats({
-        total_earnings: roundsData.earnings_total || 0,
-        earning_per_round: roundsData.earning_per_round || meData.driver.earning_per_round || 0
+        alerts: roundsData?.data.filter((round: any) => round.alert_message != null),
+        total_earnings: roundsData?.earnings_total || 0,
+        earning_per_round: roundsData?.earning_per_round || meData.driver.earning_per_round || 0
       });
     } catch (e) {
       console.error(e);
@@ -123,11 +125,28 @@ const Home: React.FC = () => {
               </div>
             </div>
             <br />
+            <div>
+              {/* Section Alert */}
+              {!isScrolled && totalStats.alerts && totalStats.alerts.length > 0 && (
+                <div
+                  onClick={() => { if (totalStats.alerts && totalStats.alerts.length > 0) setShowAlertModal(true); }}
+                  style={{ color: '#ffc409', width: "100%", marginBottom: ".5rem", backgroundColor: "rgba(255, 255, 255, 0.3)", padding: ".5rem", borderRadius: "1rem" }}>
+                  <FontAwesomeIcon icon={faCircleExclamation} size="sm" /> &nbsp;
+                  <IonLabel className="text-white larger">{totalStats.alerts[0].alert_message} </IonLabel>
+                </div>
+              )}
+            </div>
             {isLoading ? (
               <StatsSkeleton />
             ) : (
               <div className="stats-dashboard grid grid-cols-2" style={{ gap: 10 }}>
-                <div className="stat-card glass shadow-sm text-white">
+
+                <div
+                  className="stat-card glass shadow-sm text-white relative"
+                  onClick={() => { if (totalStats.alerts && totalStats.alerts.length > 0) setShowAlertModal(true); }}
+                  style={{ cursor: totalStats.alerts && totalStats.alerts.length > 0 ? 'pointer' : 'default', position: 'relative' }}
+                >
+
                   <div className="stat-label  text-white larger" ><IonText  >
                     <FontAwesomeIcon icon={faBus} size="sm" />&nbsp;
                     รอบวันนี้</IonText></div>
@@ -152,10 +171,10 @@ const Home: React.FC = () => {
       </IonHeader>
 
       <IonContent className="dashboard-content" scrollEvents={true} onIonScroll={handleScroll}>
-        <IonRefresher slot="fixed" onIonRefresh={doRefresh}>
+        <IonRefresher slot="fixed" onIonRefresh={doRefresh} >
           <IonRefresherContent />
         </IonRefresher>
-        <div className="ion-padding tab-bar-padding">
+        <div className="ion-padding tab-bar-padding" style={{ minHeight: "105vh" }}>
           {/* Active Round Info if exists or loading */}
           {isLoading ? (
             <ActiveShiftSkeleton />
@@ -185,6 +204,8 @@ const Home: React.FC = () => {
               </div>
             </div>
           )}
+
+
 
           {/* Main Actions */}
           <div className="grid grid-cols-2 ion-margin-vertical"  >
@@ -248,9 +269,6 @@ const Home: React.FC = () => {
               </IonButton>
             </div>
           )}
-          <br /><br /><br />
-          <br /><br /><br />
-          <br /><br /><br />
         </div>
       </IonContent>
       {/* <IonLoading
@@ -258,6 +276,41 @@ const Home: React.FC = () => {
         onDidDismiss={() => setIsLoading(false)}
         message="กำลังโหลดข้อมูลเที่ยวรถ..."
       /> */}
+
+      <IonModal isOpen={showAlertModal} onDidDismiss={() => setShowAlertModal(false)} initialBreakpoint={0.75} breakpoints={[0, 0.75, 1]}>
+        <IonHeader className="ion-no-border">
+          <IonToolbar>
+            <IonTitle className="font-bold" style={{ fontSize: '1.1rem' }}>การแจ้งเตือนรอบวิ่ง</IonTitle>
+            <IonButtons slot="end">
+              <IonButton onClick={() => setShowAlertModal(false)}>ปิด</IonButton>
+            </IonButtons>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent className="ion-padding">
+          <div className="alerts-section mt-2">
+            {totalStats.alerts.map((alert: any) => (
+              <div key={alert.id} className="alert-card">
+                <div className="alert-icon-container">
+                  <FontAwesomeIcon icon={faCircleExclamation} />
+                </div>
+                <div className="alert-content">
+                  <h4 className="alert-title">
+                    {alert.alert_message || 'แจ้งเตือน'}
+                  </h4>
+                  {alert.notes && (
+                    <p className="alert-note">
+                      {alert.notes}
+                    </p>
+                  )}
+                  <p className="alert-time">
+                    <FontAwesomeIcon icon={faClock} /> {moment(alert.started_at).format('HH:mm')} - {moment(alert.stopped_at).format('HH:mm')} น.
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </IonContent>
+      </IonModal>
     </IonPage>
   );
 };
