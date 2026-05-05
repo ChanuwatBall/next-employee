@@ -227,6 +227,8 @@ const TripDetail: React.FC = () => {
     return <TripDetailSkeleton />;
   }
 
+  const isToday = moment(trip.date).isSame(moment(), 'day');
+
   return (
     <IonPage>
       <IonHeader className="ion-no-border  " >
@@ -242,6 +244,7 @@ const TripDetail: React.FC = () => {
           </div>
           <IonButton slot='end' fill='clear' className='ion-padding-top '
             onClick={() => { history.push("/scan-qr/" + trip?.id) }}
+            disabled={!isToday}
             style={{ color: "#FFF", fontSize: "1.2rem" }} >
             <FontAwesomeIcon icon={faQrcode} />
           </IonButton>
@@ -346,14 +349,14 @@ const TripDetail: React.FC = () => {
 
             <div style={{ width: "100%" }} >
               <BouceAnimation duration={0.4} delay={0.5} className='ion-text-left ion-padding' style={{ width: "100%" }}  >
-                <IonButton expand='block' mode='ios' color="success" className="rounded-xl" onClick={() => setShowStartModal(true)}>
+                <IonButton expand='block' mode='ios' color="success" className="rounded-xl" onClick={() => setShowStartModal(true)} disabled={!isToday}>
                   เริ่มเที่ยว
                 </IonButton>
-                <IonButton expand='block' mode='ios' color="danger" className="rounded-xl" onClick={() => setShowStopModal(true)}>
+                <IonButton expand='block' mode='ios' color="danger" className="rounded-xl" onClick={() => setShowStopModal(true)} disabled={!isToday}>
                   จบเที่ยว
                 </IonButton><br />
                 <IonButton expand='block' fill='outline' mode='ios' color="danger" className="rounded-xl"
-                  onClick={() => { history.push("/scan-qr/" + trip?.id) }} >
+                  onClick={() => { history.push("/scan-qr/" + trip?.id) }} disabled={!isToday}>
                   Scan QR Code
                 </IonButton>
               </BouceAnimation>

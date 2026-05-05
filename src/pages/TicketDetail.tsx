@@ -22,6 +22,8 @@ const TicketDetail: React.FC = () => {
   const [iontoast] = useIonToast();
   const [isLoading, setIsLoading] = useState(false);
 
+  const isToday = booking ? moment(booking.date).isSame(moment(), 'day') : false;
+
   const { startCall, showResultSheet, setShowResultSheet, submitCallResult, currentPhone, metadata } = usePhoneCallFlow();
 
   const calltoCustomer = (phone: string, ticketData: any) => {
@@ -138,7 +140,7 @@ const TicketDetail: React.FC = () => {
         {
           text: p.checked_in_at ? "เช็คอินแล้ว" : "เช็คอินผู้โดยสาร",
           icon: checkmarkCircleOutline,
-          disabled: !!p.checked_in_at,
+          disabled: !!p.checked_in_at || !isToday,
           handler: () => { checkInSeat(p) }
         },
         { text: "ยกเลิก", role: "cancel" }
@@ -362,7 +364,7 @@ const TicketDetail: React.FC = () => {
           expand="block"
           className="premium-button"
           onClick={checkInAll}
-          disabled={booking.tickets.every((t: any) => !!t.checked_in_at)}
+          disabled={booking.tickets.every((t: any) => !!t.checked_in_at) || !isToday}
         >
           {booking.tickets.every((t: any) => !!t.checked_in_at)
             ? 'เช็คอินครบทั้งหมดแล้ว'

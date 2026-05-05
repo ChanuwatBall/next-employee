@@ -163,6 +163,8 @@ const PlanChair: React.FC = () => {
 
     const { startCall, showResultSheet, setShowResultSheet, submitCallResult, currentPhone, metadata } = usePhoneCallFlow<SeatDetail>();
 
+    const isToday = trip ? moment(trip.date).isSame(moment(), 'day') : false;
+
     useEffect(() => {
         if (metadata) {
             setSelectedSeatData(metadata);
@@ -584,7 +586,7 @@ const PlanChair: React.FC = () => {
                     <br />
                     <div className="px-5 pb-6 pt-3 border-slate-100 flex gap-3 mt-8 ion-padding-horizontal"
                         style={{ borderTop: "1px solid #e5e5e5", width: "100%", maxWidth: "720px" }} >
-                        <IonButton expand="block" fill="solid" color="primary" mode="ios" className="flex-1" onClick={checkInSeat} disabled={!!selectedSeatData?.ticket_id?.checked_in_at}>
+                        <IonButton expand="block" fill="solid" color="primary" mode="ios" className="flex-1" onClick={checkInSeat} disabled={!!selectedSeatData?.ticket_id?.checked_in_at || !isToday}>
                             เช็คอินผู้โดยสาร
                         </IonButton>
                         <IonButton expand="block" fill="outline" color="primary" mode="ios" className="flex-1" onClick={() => {
